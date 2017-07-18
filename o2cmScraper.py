@@ -2,10 +2,8 @@ import argparse
 import math
 import re
 import time
-import urllib
-from bs4 import BeautifulSoup
+from loadPage import loadPage
 from pg import DB, IntegrityError
-from tidylib import tidy_document
 
 db = None
 compsOfInterest = ['rpi17']
@@ -477,27 +475,6 @@ def getDance(str):
         return "Cha Cha"
     tokens = str.split()
     return tokens[len(tokens)-1].replace("*", "")
-
-"""
-Loads a page from a url with data (uses GET if !post, else uses POST)
-"""
-def loadPage(url, data={}, post=False):
-    request = urllib.parse.urlencode(data)
-    try:
-        if (not post):
-            getUrl = url + ('?' if len(data) != 0 else '') + request
-            response = urllib.request.urlopen(getUrl)
-        else:
-            response = urllib.request.urlopen(url, request.encode('ascii'))
-        html_response = response.read()
-        encoding = response.headers.get_content_charset('utf-8')
-        decoded_html = html_response.decode(encoding)
-        tidiedPage, pageErrors = tidy_document(decoded_html)
-        return BeautifulSoup(tidiedPage, 'html.parser')
-    except urllib.error.HTTPError:
-        print("Failed to fetch %s with request: %s" % (url, request))
-        return None
-    # return BeautifulSoup(u, 'html.parser')
 
 class Competition(object):
     def __init__(self, compId, name, year, date):
