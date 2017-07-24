@@ -106,14 +106,14 @@ def ycn(firstName, lastName):
     global db
     
     leadPoints = {}
-    with open("ycn_lead.sql") as relevantEventQuery:
-        leadResult = db.query(relevantEventQuery.read() % (firstName, lastName))
+    with open("ycn.sql") as relevantEventQuery:
+        leadResult = db.query(relevantEventQuery.read() % ('lead', firstName, lastName))
         leadPoints = ycnResult(leadResult)
         printYcn(leadPoints)
 
     followPoints = {}
-    with open("ycn_follow.sql") as relevantEventQuery:
-        followResult = db.query(relevantEventQuery.read() % (firstName, lastName))
+    with open("ycn.sql") as relevantEventQuery:
+        followResult = db.query(relevantEventQuery.read() % ('follow', firstName, lastName))
         followPoints = ycnResult(followResult)
         printYcn(followPoints)
 

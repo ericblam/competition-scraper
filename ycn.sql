@@ -47,7 +47,7 @@ where
 	and p.event_id = en.event_id
 	and p.competition_id = ev.competition_id
 	and p.event_id = ev.event_id
-	and c.competitor_id = en.lead_id
+	and c.competitor_id = en.%s_id
 	and en.competitor_number = p.competitor_number
 	and r.competition_id = p.competition_id
 	and r.event_id = p.event_id
