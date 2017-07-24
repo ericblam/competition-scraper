@@ -103,6 +103,9 @@ def initialize():
         
 """
 Returns list of Competition objects of interest
+
+:param compsOfInterest: list of compIds to specifically scrape. Scrapes all if empty
+:returns: list of Competitions
 """
 def getComps(compsOfInterest=[]):
     url = 'http://results.o2cm.com/'
@@ -121,7 +124,10 @@ def getComps(compsOfInterest=[]):
     return competitions
 
 """
-Loads and parses page for competition
+Loads page for competition compId
+
+:param compId: string compId
+:returns: bs4 object of results page for compId
 """
 def getCompPage(compId):
     url = 'http://results.o2cm.com/event3.asp'
@@ -137,52 +143,67 @@ def getCompPage(compId):
     return loadPage(url, data, True);
 
 """
-Reads whole listing of results from competition page
+Reads whole listing of results from competition page.
+
+:param compId: string id for the competition
+:param compPage: bs4 object of competition results page
+:effects: adds competitors and entries to database
 """
 def readCompPage(compId, compPage):
     tables = compPage.find_all('table')
     mainTable = tables[1]
     rows = mainTable.find_all('tr')
 
+    # Find first link
     r = 0
     while r < len(rows):
         if (rows[r].find('a') != None):
             break
         r += 1
 
-    lastEventName = rows[r].get_text().lstrip().strip()
-    lastEventLink = rows[r].find('a')['href']
-    m = re.match('scoresheet\d.asp\?.+&heatid=(\w+)&.+', lastEventLink)
-    lastEventId = m.group(1)
-    lastEventLink = 'http://results.o2cm.com/' + lastEventLink
+    # Initialize loop to go through links
+    lastHeatName = rows[r].get_text().lstrip().strip()
+    lastHeatLink = rows[r].find('a')['href']
+    m = re.match('scoresheet\d.asp\?.+&heatid=(\w+)&.+', lastHeatLink)
+    lastHeatId = m.group(1)
+    lastHeatLink = 'http://results.o2cm.com/' + lastHeatLink
     r += 1
-    print(lastEventName)
-    if ("combine" not in lastEventName.lower()):
-        eventHeatPages = getHeatPages(lastEventLink, compId, lastEventId)
+    print(lastHeatName)
+
+    # Ignoring combine event, read first event page, read all heats of event
+    if ("combine" not in lastHeatName.lower()):
+        eventHeatPages = getHeatPages(lastHeatLink, compId, lastHeatId)
         for i in range(len(eventHeatPages)):
-            readHeatPage(compId, eventHeatPages[i], lastEventId, i)
+            readHeatPage(compId, eventHeatPages[i], lastHeatId, i)
+
+    # Keep finding appropriate links
+    # As before, read first event page, read all heats of event
     global db
     while r < len(rows):
         rowText = rows[r].get_text().strip()
+        # Row is a link. Read event and heats.
         if (rows[r].find('a') != None):
-            lastEventName = rowText
-            lastEventLink = rows[r].find('a')['href']
-            m = re.match('scoresheet\d.asp\?.+&heatid=(\w+)&.+', lastEventLink)
-            lastEventId = m.group(1)
-            lastEventLink = 'http://results.o2cm.com/' + lastEventLink
-            print(lastEventName)
-            if ("combine" in lastEventName.lower()):
+            lastHeatName = rowText
+            lastHeatLink = rows[r].find('a')['href']
+            m = re.match('scoresheet\d.asp\?.+&heatid=(\w+)&.+', lastHeatLink)
+            lastHeatId = m.group(1)
+            lastHeatLink = 'http://results.o2cm.com/' + lastHeatLink
+            print(lastHeatName)
+            if ("combine" in lastHeatName.lower()):
                 r += 1
                 continue
-            eventHeatPages = getHeatPages(lastEventLink, compId, lastEventId)
+            eventHeatPages = getHeatPages(lastHeatLink, compId, lastHeatId)
             for i in range(len(eventHeatPages)):
-                readHeatPage(compId, eventHeatPages[i], lastEventId, i)
+                readHeatPage(compId, eventHeatPages[i], lastHeatId, i)
+        # Blank row
         elif (rowText == '----'):
             pass
+        # Row is a couple
         else:
-            if ("combine" in lastEventName.lower()):
+            if ("combine" in lastHeatName.lower()):
                 r += 1
                 continue
+
             m = re.match('\d+\) (\d{1,3}) (.+) & (.+) \- (.+)', rowText)
             state = 'N/A'
             if (m != None):
@@ -198,7 +219,8 @@ def readCompPage(compId, compPage):
 
             global newCompetitorId
             global competitors
-            
+
+            # Add leader into database
             if (leader in competitors):
                 leaderId = competitors[leader]
             else:
@@ -213,6 +235,7 @@ def readCompPage(compId, compPage):
                 except IntegrityError as e:
                     print(e)
 
+            # Add follower into database
             if (follower in competitors):
                 followerId = competitors[follower]
             else:
@@ -227,12 +250,11 @@ def readCompPage(compId, compPage):
                 except IntegrityError as e:
                     print(e)
 
-
             # Add appropriate entry to database
             try:
                 db.insert("entries",
                           competition_id=compId,
-                          event_id=lastEventId,
+                          event_id=lastHeatId,
                           lead_id=leaderId,
                           follow_id=followerId,
                           competitor_number=coupleNumber)
@@ -242,7 +264,10 @@ def readCompPage(compId, compPage):
         r += 1
 
 """
-Returns (hopefully) correctly-parsed (firstName, lastName) from name
+Parses name into first and last name, checking against o2cm if ambiguous
+
+:param name: string containing full name
+:returns: tuple (firstName, lastName)
 """
 def competitorName(name):
     tokens = name.split()
@@ -270,6 +295,11 @@ def competitorName(name):
 
 """
 Returns list of pages for each round in a heat
+
+:param heatUrl: string url for the event
+:param compId: string competition id
+:param heatId: string id for heat
+:returns: list of bs4 objsts, each a page for a round of heatId of compId
 """
 def getHeatPages(heatUrl, compId, heatId):
     heatUrlSimple = heatUrl.split("?")[0]
@@ -290,8 +320,14 @@ def getHeatPages(heatUrl, compId, heatId):
 
 """
 Reads page for specified round of heat, adding appropriate data to database
+
+:param compId: string competition id
+:param heatPage: bs4 object for results page for heat
+:param heatId: string id for heat
+:param roundNum: int round number
+:effects: adds event, results, and placements into database
 """
-def readHeatPage(compId, heatPage, eventId, heatNum):
+def readHeatPage(compId, heatPage, heatId, roundNum):
     tables = heatPage.find_all('table')
     keyTable = tables[len(tables)-2]
     global db
@@ -299,18 +335,18 @@ def readHeatPage(compId, heatPage, eventId, heatNum):
     numResultsTables = len(tables)-3
     # Check dupes
     eventLevel, eventCategory = parseEvent(tables[0]('tr')[2].get_text())
-    if ((compId, eventId) not in heats):
+    if ((compId, heatId) not in heats):
         try:
             db.insert("events",
                       competition_id=compId,
-                      event_id=eventId,
+                      event_id=heatId,
                       event_level=eventLevel,
                       category=eventCategory)
-            heats.add((compId,eventId))
+            heats.add((compId,heatId))
         except IntegrityError as e:
             print(e)
         
-    if (heatNum == 0 and numResultsTables > 1):
+    if (roundNum == 0 and numResultsTables > 1):
         numResultsTables -= 1
         
     for i in range(1, numResultsTables+1):
@@ -321,7 +357,7 @@ def readHeatPage(compId, heatPage, eventId, heatNum):
         headerRow = resultRows[1]
         judgeNumbers = []
         headerRowCells = headerRow('td', 't1b')
-        numJudges = len(headerRowCells)-1 if heatNum == 0 else len(headerRowCells)
+        numJudges = len(headerRowCells)-1 if roundNum == 0 else len(headerRowCells)
         for i in range(0, numJudges):
             text = headerRowCells[i].get_text().strip()
             if (len(text) > 0):
@@ -333,22 +369,22 @@ def readHeatPage(compId, heatPage, eventId, heatNum):
             results = []
             for j in range(len(judgeNumbers)):
                 contents = cells[j+1].get_text().strip()
-                if (heatNum == 0):
+                if (roundNum == 0):
                     results.append(contents)
                 else:
                     results.append('t' if contents == 'X' else 'f')
             for j in range(len(judgeNumbers)):
                 if (results[j] == "-"):
                     continue;
-                if (heatNum == 0):
+                if (roundNum == 0):
                     try:
                         db.insert("results",
                                   competition_id=compId,
-                                  event_id=eventId,
+                                  event_id=heatId,
                                   event_dance=dance,
                                   judge_id=judgeNumbers[j],
                                   competitor_number=coupleNumber,
-                                  round=heatNum,
+                                  round=roundNum,
                                   placement=results[j],
                                   callback="f")
                     except IntegrityError as e:
@@ -358,31 +394,31 @@ def readHeatPage(compId, heatPage, eventId, heatNum):
                     try:
                         db.insert("results",
                                   competition_id=compId,
-                                  event_id=eventId,
+                                  event_id=heatId,
                                   event_dance=dance,
                                   judge_id=judgeNumbers[j],
                                   competitor_number=coupleNumber,
-                                  round=heatNum,
+                                  round=roundNum,
                                   placement=-1,
                                   callback=results[j])
                     except IntegrityError as e:
                         print(e)
 
-            if (heatNum == 0 and numResultsTables == 1):
+            if (roundNum == 0 and numResultsTables == 1):
                 placementString = cells[-2].get_text().strip()
                 if (placementString != "-"):
                     eventPlacement = "%d" % int(math.floor(float(placementString)))
                     try:
                         db.insert("placements",
                                   competition_id=compId,
-                                  event_id=eventId,
+                                  event_id=heatId,
                                   competitor_number=coupleNumber,
                                   placement=eventPlacement)
                     except IntegrityError as e:
                         print(e)
 
                 
-    if (heatNum == 0 and numResultsTables > 1):
+    if (roundNum == 0 and numResultsTables > 1):
         finalResultsTable = tables[numResultsTables+1]('tr')
         for i in range(2, len(finalResultsTable)):
             resultRow = finalResultsTable[i]('td')
@@ -392,7 +428,7 @@ def readHeatPage(compId, heatPage, eventId, heatNum):
                 try:
                     db.insert("placements",
                               competition_id=compId,
-                              event_id=eventId,
+                              event_id=heatId,
                               competitor_number=coupleNumber,
                               placement=eventPlacement)
                 except IntegrityError as e:
