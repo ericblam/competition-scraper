@@ -1,10 +1,11 @@
 import argparse
 import math
 import re
+import signal
 import time
 from loadPage import loadPage
 from pg import DB, IntegrityError
-from utils import parseEvent, getDance
+from utils import *
 
 db = None
 compsOfInterest = ['rpi17']
@@ -31,7 +32,8 @@ def main():
             print(">>>   ", comp, "   <<<")
             readCompPage(comp.compId, compPage)
         except IntegrityError as e:
-            print(e)
+            logError(e)
+    closeLog()
 
 """
 Initializes state from database
@@ -52,6 +54,11 @@ def initialize():
                         default=False,
                         help='resets database')
     args = parser.parse_args()
+
+    # Open Log
+    openLog()
+
+    signal.signal(signal.SIGINT, sigintHandler)
     
     # initialize database connection
     global db
@@ -233,7 +240,7 @@ def readCompPage(compId, compPage):
                               first_name=leader[0],
                               last_name=leader[1])
                 except IntegrityError as e:
-                    print(e)
+                    logError(e)
 
             # Add follower into database
             if (follower in competitors):
@@ -248,7 +255,7 @@ def readCompPage(compId, compPage):
                               first_name=follower[0],
                               last_name=follower[1])
                 except IntegrityError as e:
-                    print(e)
+                    logError(e)
 
             # Add appropriate entry to database
             try:
@@ -259,7 +266,7 @@ def readCompPage(compId, compPage):
                           follow_id=followerId,
                           competitor_number=coupleNumber)
             except IntegrityError as e:
-                print(e)
+                logError(e)
 
         r += 1
 
@@ -344,7 +351,7 @@ def readHeatPage(compId, heatPage, heatId, roundNum):
                       category=eventCategory)
             heats.add((compId,heatId))
         except IntegrityError as e:
-            print(e)
+            logError(e)
         
     if (roundNum == 0 and numResultsTables > 1):
         numResultsTables -= 1
@@ -388,7 +395,7 @@ def readHeatPage(compId, heatPage, heatId, roundNum):
                                   placement=results[j],
                                   callback="f")
                     except IntegrityError as e:
-                        print(e)
+                        logError(e)
 
                 else:
                     try:
@@ -402,7 +409,7 @@ def readHeatPage(compId, heatPage, heatId, roundNum):
                                   placement=-1,
                                   callback=results[j])
                     except IntegrityError as e:
-                        print(e)
+                        logError(e)
 
             if (roundNum == 0 and numResultsTables == 1):
                 placementString = cells[-2].get_text().strip()
@@ -415,7 +422,7 @@ def readHeatPage(compId, heatPage, heatId, roundNum):
                                   competitor_number=coupleNumber,
                                   placement=eventPlacement)
                     except IntegrityError as e:
-                        print(e)
+                        logError(e)
 
                 
     if (roundNum == 0 and numResultsTables > 1):
@@ -432,7 +439,7 @@ def readHeatPage(compId, heatPage, heatId, roundNum):
                               competitor_number=coupleNumber,
                               placement=eventPlacement)
                 except IntegrityError as e:
-                    print(e)
+                    logError(e)
 
 
     # Read judges
@@ -458,7 +465,7 @@ def readHeatPage(compId, heatPage, heatId, roundNum):
                           judge_id=judgeNum,
                           judge_name=judgeName)
             except IntegrityError as e:
-                print(e)
+                logError(e)
 
 class Competition(object):
     def __init__(self, compId, name, year, date):

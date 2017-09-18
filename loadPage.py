@@ -1,4 +1,4 @@
-import urllib
+import urllib.error, urllib.parse, urllib.request
 from bs4 import BeautifulSoup
 from tidylib import tidy_document
 

@@ -1,3 +1,51 @@
+import datetime
+import traceback
+
+logfile = None
+VERBOSE = True
+
+"""
+Opens Log for use
+"""
+def openLog():
+    global logfile
+    logfile = open("log.debug", "a")
+
+"""
+Closes Log
+"""
+def closeLog():
+    global logfile
+    logfile.close()
+    logfile = None
+
+"""
+Writes str to logfile. If verbose, also writes str to stdout
+"""
+def log(str, verbose=False):
+    global logfile
+    logfile.write("%s: " % datetime.datetime.now())
+    logfile.write(str)
+    if (VERBOSE or verbose):
+        print(str)
+
+"""
+Write error to log
+"""
+def logError(e, verbose=False):
+    global logfile
+    errorString = str(e)
+    errorString += traceback.format_exc()
+    log(errorString, verbose)
+
+"""
+Handles SIGINT by closing log and exiting
+"""
+def sigintHandler(signal, frame):
+    log("SIGINT Handled\n")
+    closeLog()
+    exit(0)
+
 """
 Normalizes event name
 """
