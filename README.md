@@ -6,14 +6,14 @@ Due to restrictions with urllib, this project uses python3
 
 Make sure that you have the following packages installed:
 
-    * postgresql
-    * python-tidylib
+* postgresql
+* python-tidylib
 
 Make sure that you have the following python installed:
 
-    * bs4
-    * pygresql
-    * urllib3
+* bs4
+* pygresql
+* urllib3
 
 To use o2cmScraper.py to scrape all competitions O2CM has:
 
