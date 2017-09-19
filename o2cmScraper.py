@@ -26,7 +26,6 @@ def main():
                       competition_id=comp.compId,
                       comp_host="",
                       comp_name=comp.compName,
-                      comp_year=comp.year,
                       comp_date=comp.date)
             compPage = getCompPage(comp.compId)
             print(">>>   ", comp, "   <<<")
@@ -471,11 +470,11 @@ class Competition(object):
     def __init__(self, compId, name, year, date):
         self.compId = compId
         self.compName = name
-        self.year = year
-        self.date = date
+        dateString = "%s %s" % (year, date)
+        self.date = dateString
 
     def __str__(self):
-        return "%s (%s), %s %s" % (self.compName, self.compId, self.date, self.year)
+        return "%s (%s), %s" % (self.compName, self.compId, self.date)
 
 if __name__ == '__main__':
     main()

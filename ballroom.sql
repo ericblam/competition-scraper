@@ -48,8 +48,7 @@ create table competitions (
        competition_id       varchar(8) primary key
        , comp_host          varchar(255)
        , comp_name          varchar(255)
-       , comp_year          int
-       , comp_date          varchar(255)
+       , comp_date          date
 );
 
 create table competitors (
