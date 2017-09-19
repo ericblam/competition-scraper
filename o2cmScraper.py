@@ -292,7 +292,7 @@ def competitorName(name):
             soup = loadPage('http://results.o2cm.com/individual.asp', {'szFirst': firstName, 'szLast': lastName}, True)
             if (soup.find('b') != None and 'no results' not in soup.find('b').get_text().lower()):
                 if (found):
-                    print("WARNING: multiple people named %s" % name)
+                    log("WARNING: multiple people named %s" % name)
                 found = True
         if (found):
             competitorToNames[name] = (firstName, lastName)
