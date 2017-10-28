@@ -1,4 +1,5 @@
 import argparse
+import logging
 import math
 import re
 import signal
@@ -19,6 +20,7 @@ def main():
     initialize()
 
     global compsOfInterest
+
     comps = getComps(compsOfInterest)
     for comp in comps:
         try:
@@ -28,11 +30,11 @@ def main():
                       comp_name=comp.compName,
                       comp_date=comp.date)
             compPage = getCompPage(comp.compId)
-            print(">>>   ", comp, "   <<<")
+            print(">>>   %s   <<<" % comp)
+            logging.info(">>>   %s   <<<", comp)
             readCompPage(comp.compId, compPage)
         except IntegrityError as e:
-            logError(e)
-    closeLog()
+            logging.error(e);
 
 def initialize():
     """
@@ -53,10 +55,19 @@ def initialize():
                         action='store_true',
                         default=False,
                         help='resets database')
+    parser.add_argument("--verbose",
+                        dest="verbose",
+                        action='store_true',
+                        default=False,
+                        help='Outputs verbosely')
     args = parser.parse_args()
 
     # Open Log
-    openLog()
+    logLevel = logging.DEBUG
+    if (args.verbose):
+        logLevel = logging.INFO
+    logging.basicConfig(filename="o2cmScraper.log", level=logLevel)
+
 
     signal.signal(signal.SIGINT, sigintHandler)
 
@@ -179,6 +190,7 @@ def readCompPage(compId, compPage):
     lastHeatLink = 'http://results.o2cm.com/' + lastHeatLink
     r += 1
     print(lastHeatName)
+    logging.info(lastHeatName)
 
     # Ignoring combine event, read first event page, read all heats of event
     if ("combine" not in lastHeatName.lower()):
@@ -199,6 +211,7 @@ def readCompPage(compId, compPage):
             lastHeatId = m.group(1)
             lastHeatLink = 'http://results.o2cm.com/' + lastHeatLink
             print(lastHeatName)
+            logging.info(lastHeatName)
             if ("combine" in lastHeatName.lower()):
                 r += 1
                 continue
@@ -226,6 +239,7 @@ def readCompPage(compId, compPage):
             followerString = m.group(3).strip()
             follower = competitorName(followerString)
             # print('%s - %s & %s from %s' % (coupleNumber, leader, follower, state))
+            # logging.info('%s - %s & %s from %s' % (coupleNumber, leader, follower, state))
 
             global newCompetitorId
             global competitors
@@ -243,7 +257,7 @@ def readCompPage(compId, compPage):
                               first_name=leader[0],
                               last_name=leader[1])
                 except IntegrityError as e:
-                    logError(e)
+                    logging.error(e);
 
             # Add follower into database
             if (follower in competitors):
@@ -258,7 +272,7 @@ def readCompPage(compId, compPage):
                               first_name=follower[0],
                               last_name=follower[1])
                 except IntegrityError as e:
-                    logError(e)
+                    logging.error(e)
 
             # Add appropriate entry to database
             try:
@@ -269,7 +283,7 @@ def readCompPage(compId, compPage):
                           follow_id=followerId,
                           competitor_number=coupleNumber)
             except IntegrityError as e:
-                logError(e)
+                logging.error(e)
 
         r += 1
 
@@ -297,7 +311,7 @@ def competitorName(name):
             soup = loadPage('http://results.o2cm.com/individual.asp', {'szFirst': firstName, 'szLast': lastName}, True)
             if (soup.find('b') != None and 'no results' not in soup.find('b').get_text().lower()):
                 if (found):
-                    log("WARNING: multiple people named %s" % name)
+                    logging.warning("multiple people named %s", name)
                 found = True
         if (found):
             competitorToNames[name] = (firstName, lastName)
@@ -313,7 +327,7 @@ def getHeatPages(heatUrl, compId, heatId):
     :param heatId: string id for heat
     :returns: list of bs4 objsts, each a page for a round of heatId of compId
     """
-    
+
     heatUrlSimple = heatUrl.split("?")[0]
     soup = loadPage(heatUrlSimple, {'event': compId,'heatId': heatId})
     if (soup is None):
@@ -357,7 +371,7 @@ def readHeatPage(compId, heatPage, heatId, roundNum):
                       category=eventCategory)
             heats.add((compId,heatId))
         except IntegrityError as e:
-            logError(e)
+            logging.error(e)
 
     if (roundNum == 0 and numResultsTables > 1):
         numResultsTables -= 1
@@ -401,7 +415,7 @@ def readHeatPage(compId, heatPage, heatId, roundNum):
                                   placement=results[j],
                                   callback="f")
                     except IntegrityError as e:
-                        logError(e)
+                        logging.error(e)
 
                 else:
                     try:
@@ -415,7 +429,7 @@ def readHeatPage(compId, heatPage, heatId, roundNum):
                                   placement=-1,
                                   callback=results[j])
                     except IntegrityError as e:
-                        logError(e)
+                        logging.error(e)
 
             if (roundNum == 0 and numResultsTables == 1):
                 placementString = cells[-2].get_text().strip()
@@ -428,7 +442,7 @@ def readHeatPage(compId, heatPage, heatId, roundNum):
                                   competitor_number=coupleNumber,
                                   placement=eventPlacement)
                     except IntegrityError as e:
-                        logError(e)
+                        logging.error(e)
 
 
     if (roundNum == 0 and numResultsTables > 1):
@@ -445,7 +459,7 @@ def readHeatPage(compId, heatPage, heatId, roundNum):
                               competitor_number=coupleNumber,
                               placement=eventPlacement)
                 except IntegrityError as e:
-                    logError(e)
+                    logging.error(e)
 
 
     # Read judges
@@ -471,7 +485,7 @@ def readHeatPage(compId, heatPage, heatId, roundNum):
                           judge_id=judgeNum,
                           judge_name=judgeName)
             except IntegrityError as e:
-                logError(e)
+                logging.error(e)
 
 class Competition(object):
     def __init__(self, compId, name, year, date):
