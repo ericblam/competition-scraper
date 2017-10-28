@@ -5,10 +5,11 @@ from tidylib import tidy_document
 
 CACHE_DIR = ".cache/"
 
-"""
-Loads a page from a url with data (uses GET if !post, else uses POST)
-"""
 def loadPage(url, data={}, post=False):
+    """
+    Loads a page from a url with data (uses GET if !post, else uses POST)
+    """
+
     request = urllib.parse.urlencode(data)
 
     sortedDataString = "_".join([str(i) + "=" + str(data[i]) for i in sorted(data.keys())])

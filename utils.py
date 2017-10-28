@@ -4,52 +4,58 @@ import traceback
 logfile = None
 VERBOSE = True
 
-"""
-Opens Log for use
-"""
 def openLog():
+    """
+    Opens Log for use
+    """
+
     global logfile
     logfile = open("log.debug", "a")
 
-"""
-Closes Log
-"""
 def closeLog():
+    """
+    Closes Log
+    """
+
     global logfile
     logfile.close()
     logfile = None
 
-"""
-Writes str to logfile. If verbose, also writes str to stdout
-"""
 def log(str, verbose=False):
+    """
+    Writes str to logfile. If verbose, also writes str to stdout
+    """
+
     global logfile
     logfile.write("%s: " % datetime.datetime.now())
     logfile.write(str)
     if (VERBOSE or verbose):
         print(str)
 
-"""
-Write error to log
-"""
 def logError(e, verbose=False):
+    """
+    Write error to log
+    """
+
     global logfile
     errorString = str(e)
     errorString += traceback.format_exc()
     log(errorString, verbose)
 
-"""
-Handles SIGINT by closing log and exiting
-"""
 def sigintHandler(signal, frame):
+    """
+    Handles SIGINT by closing log and exiting
+    """
+
     log("SIGINT Handled\n")
     closeLog()
     exit(0)
 
-"""
-Normalizes event name
-"""
 def parseEvent(str):
+    """
+    Normalizes event name
+    """
+
     cleanString = str.lower().strip()
     level = ""
     category = ""
@@ -91,10 +97,11 @@ def parseEvent(str):
 
     return level, category
 
-"""
-Normalizes dance name
-"""
 def getDance(str):
+    """
+    Normalizes dance name
+    """
+
     if ("v. waltz" in str.lower() or "viennese waltz" in str.lower()):
         return "V. Waltz"
     if ("paso doble" in str.lower()):

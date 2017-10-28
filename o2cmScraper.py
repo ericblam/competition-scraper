@@ -34,10 +34,11 @@ def main():
             logError(e)
     closeLog()
 
-"""
-Initializes state from database
-"""
 def initialize():
+    """
+    Initializes state from database
+    """
+
     parser = argparse.ArgumentParser(description="Scrape O2CM database")
     parser.add_argument("comps",
                         nargs="*",
@@ -58,7 +59,7 @@ def initialize():
     openLog()
 
     signal.signal(signal.SIGINT, sigintHandler)
-    
+
     # initialize database connection
     global db
     db = DB(dbname='ballroom_competitions',
@@ -106,14 +107,15 @@ def initialize():
     result = db.query("select * from events").getresult()
     if (len(result) > 0):
         heats = set([(x[0], x[1]) for x in result])
-        
-"""
-Returns list of Competition objects of interest
 
-:param compsOfInterest: list of compIds to specifically scrape. Scrapes all if empty
-:returns: list of Competitions
-"""
 def getComps(compsOfInterest=[]):
+    """
+    Returns list of Competition objects of interest
+
+    :param compsOfInterest: list of compIds to specifically scrape. Scrapes all if empty
+    :returns: list of Competitions
+    """
+
     url = 'http://results.o2cm.com/'
     soup = loadPage(url)
     compLinks = soup.find_all('a')
@@ -129,13 +131,14 @@ def getComps(compsOfInterest=[]):
             competitions.append(Competition(compId, compName, year, date))
     return competitions
 
-"""
-Loads page for competition compId
-
-:param compId: string compId
-:returns: bs4 object of results page for compId
-"""
 def getCompPage(compId):
+    """
+    Loads page for competition compId
+
+    :param compId: string compId
+    :returns: bs4 object of results page for compId
+    """
+
     url = 'http://results.o2cm.com/event3.asp'
     data = {
         'selDiv': '',
@@ -148,14 +151,15 @@ def getCompPage(compId):
     }
     return loadPage(url, data, True);
 
-"""
-Reads whole listing of results from competition page.
-
-:param compId: string id for the competition
-:param compPage: bs4 object of competition results page
-:effects: adds competitors and entries to database
-"""
 def readCompPage(compId, compPage):
+    """
+    Reads whole listing of results from competition page.
+
+    :param compId: string id for the competition
+    :param compPage: bs4 object of competition results page
+    :effects: adds competitors and entries to database
+    """
+
     tables = compPage.find_all('table')
     mainTable = tables[1]
     rows = mainTable.find_all('tr')
@@ -269,13 +273,14 @@ def readCompPage(compId, compPage):
 
         r += 1
 
-"""
-Parses name into first and last name, checking against o2cm if ambiguous
-
-:param name: string containing full name
-:returns: tuple (firstName, lastName)
-"""
 def competitorName(name):
+    """
+    Parses name into first and last name, checking against o2cm if ambiguous
+
+    :param name: string containing full name
+    :returns: tuple (firstName, lastName)
+    """
+
     tokens = name.split()
     if (len(tokens) < 2):
         return (name, '')
@@ -299,15 +304,16 @@ def competitorName(name):
             return (firstName, lastName)
         return (name, '')
 
-"""
-Returns list of pages for each round in a heat
-
-:param heatUrl: string url for the event
-:param compId: string competition id
-:param heatId: string id for heat
-:returns: list of bs4 objsts, each a page for a round of heatId of compId
-"""
 def getHeatPages(heatUrl, compId, heatId):
+    """
+    Returns list of pages for each round in a heat
+
+    :param heatUrl: string url for the event
+    :param compId: string competition id
+    :param heatId: string id for heat
+    :returns: list of bs4 objsts, each a page for a round of heatId of compId
+    """
+    
     heatUrlSimple = heatUrl.split("?")[0]
     soup = loadPage(heatUrlSimple, {'event': compId,'heatId': heatId})
     if (soup is None):
@@ -317,23 +323,24 @@ def getHeatPages(heatUrl, compId, heatId):
     select = soup.find('select', id='selCount')
     if (select != None):
         numRounds = len(select.find_all('option'))
-    
+
     heatPageSoups = []
     heatPageSoups.append(soup)
     for i in range(1, numRounds):
         heatPageSoups.append(loadPage(heatUrlSimple, {'event': compId, 'heatId': heatId, 'selCount': i}, True))
     return heatPageSoups
 
-"""
-Reads page for specified round of heat, adding appropriate data to database
-
-:param compId: string competition id
-:param heatPage: bs4 object for results page for heat
-:param heatId: string id for heat
-:param roundNum: int round number
-:effects: adds event, results, and placements into database
-"""
 def readHeatPage(compId, heatPage, heatId, roundNum):
+    """
+    Reads page for specified round of heat, adding appropriate data to database
+
+    :param compId: string competition id
+    :param heatPage: bs4 object for results page for heat
+    :param heatId: string id for heat
+    :param roundNum: int round number
+    :effects: adds event, results, and placements into database
+    """
+
     tables = heatPage.find_all('table')
     keyTable = tables[len(tables)-2]
     global db
@@ -351,10 +358,10 @@ def readHeatPage(compId, heatPage, heatId, roundNum):
             heats.add((compId,heatId))
         except IntegrityError as e:
             logError(e)
-        
+
     if (roundNum == 0 and numResultsTables > 1):
         numResultsTables -= 1
-        
+
     for i in range(1, numResultsTables+1):
         resultRows = tables[i].find_all('tr')
         dance = getDance(resultRows[0].get_text().strip())
@@ -423,7 +430,7 @@ def readHeatPage(compId, heatPage, heatId, roundNum):
                     except IntegrityError as e:
                         logError(e)
 
-                
+
     if (roundNum == 0 and numResultsTables > 1):
         finalResultsTable = tables[numResultsTables+1]('tr')
         for i in range(2, len(finalResultsTable)):
