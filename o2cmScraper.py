@@ -1,11 +1,11 @@
 import argparse
 import logging
-import math
-import re
 import signal
-import time
-from loadPage import loadPage
+from math import floor
 from pg import DB, IntegrityError
+
+from loadPage import loadPage
+from re import match
 from utils import *
 
 db = None
@@ -139,7 +139,7 @@ def getComps(compsOfInterest=[]):
         date = tag.parent.previous_sibling.previous_sibling.string.strip()
         compName = tag.get_text()
         link = tag['href']
-        m = re.match('event[23].asp\?event=([a-zA-Z]{0,4}\d{0,5}[a-zA-Z]?)&.*', link)
+        m = match('event[23].asp\?event=([a-zA-Z]{0,4}\d{0,5}[a-zA-Z]?)&.*', link)
         compId = m.group(1)
         if (len(compsOfInterest) == 0 or compId in compsOfInterest):
             competitions.append(Competition(compId, compName, year, date))
@@ -188,7 +188,7 @@ def readCompPage(compId, compPage):
     # Initialize loop to go through links
     lastHeatName = rows[r].get_text().lstrip().strip()
     lastHeatLink = rows[r].find('a')['href']
-    m = re.match('scoresheet\d.asp\?.+&heatid=(\w+)&.+', lastHeatLink)
+    m = match('scoresheet\d.asp\?.+&heatid=(\w+)&.+', lastHeatLink)
     lastHeatId = m.group(1)
     lastHeatLink = 'http://results.o2cm.com/' + lastHeatLink
     r += 1
@@ -210,7 +210,7 @@ def readCompPage(compId, compPage):
         if (rows[r].find('a') != None):
             lastHeatName = rowText
             lastHeatLink = rows[r].find('a')['href']
-            m = re.match('scoresheet\d.asp\?.+&heatid=(\w+)&.+', lastHeatLink)
+            m = match('scoresheet\d.asp\?.+&heatid=(\w+)&.+', lastHeatLink)
             lastHeatId = m.group(1)
             lastHeatLink = 'http://results.o2cm.com/' + lastHeatLink
             print(lastHeatName)
@@ -230,12 +230,12 @@ def readCompPage(compId, compPage):
                 r += 1
                 continue
 
-            m = re.match('\d+\) (\d{1,3}) (.+) & (.+) \- (.+)', rowText)
+            m = match('\d+\) (\d{1,3}) (.+) & (.+) \- (.+)', rowText)
             state = 'N/A'
             if (m != None):
                 state = m.group(4).strip()
             else:
-                m = re.match('\d+\) (\d{1,3}) (.+) & (.+)', rowText)
+                m = match('\d+\) (\d{1,3}) (.+) & (.+)', rowText)
             coupleNumber = m.group(1).strip()
             leaderString = m.group(2).strip()
             leader = competitorName(leaderString)
@@ -437,7 +437,7 @@ def readHeatPage(compId, heatPage, heatId, roundNum):
             if (roundNum == 0 and numResultsTables == 1):
                 placementString = cells[-2].get_text().strip()
                 if (placementString != "-"):
-                    eventPlacement = "%d" % int(math.floor(float(placementString)))
+                    eventPlacement = "%d" % int(floor(float(placementString)))
                     try:
                         db.insert("placements",
                                   competition_id=compId,
