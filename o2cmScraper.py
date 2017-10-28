@@ -66,7 +66,10 @@ def initialize():
     logLevel = logging.DEBUG
     if (args.verbose):
         logLevel = logging.INFO
-    logging.basicConfig(filename="o2cmScraper.log", level=logLevel)
+    logging.basicConfig(filename="o2cmScraper.log",
+                        format="%(asctime)s %(name)-12s %(levelname)-8s %(message)s",
+                        datefmt="%y-%m-%d %H:%M:%S",
+                        level=logLevel)
 
 
     signal.signal(signal.SIGINT, sigintHandler)
