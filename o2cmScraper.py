@@ -21,7 +21,7 @@ def main():
 
     global compsOfInterest
 
-    comps = getComps(compsOfInterest)
+    comps = getListofComps(compsOfInterest)
     for comp in comps:
         try:
             db.insert("competitions",
@@ -122,7 +122,7 @@ def initialize():
     if (len(result) > 0):
         heats = set([(x[0], x[1]) for x in result])
 
-def getComps(compsOfInterest=[]):
+def getListofComps(compsOfInterest=[]):
     """
     Returns list of Competition objects of interest
 
@@ -165,6 +165,23 @@ def getCompPage(compId):
     }
     return loadPage(url, data, True);
 
+def parseHeatLink(tag):
+    """
+    Gets info from heat link tag.
+
+    :param tag: Tag containing <a> tag with link to heat
+    :returns: tuple of (heatName, heatId, heatLink)
+    """
+
+    heatName = tag.get_text().lstrip().strip()
+    heatLink = tag.find('a')['href']
+    m = match('scoresheet\d.asp\?.+&heatid=(\w+)&.+', heatLink)
+    heatId = m.group(1)
+    heatLink = 'http://results.o2cm.com/' + heatLink
+    print(heatName)
+    logging.info(heatName)
+    return (heatName, heatId, heatLink)
+
 def readCompPage(compId, compPage):
     """
     Reads whole listing of results from competition page.
@@ -179,116 +196,108 @@ def readCompPage(compId, compPage):
     rows = mainTable.find_all('tr')
 
     # Find first link
-    r = 0
-    while r < len(rows):
-        if (rows[r].find('a') != None):
+    rowNum = 0
+    while rowNum < len(rows):
+        if (rows[rowNum].find('a') != None):
             break
-        r += 1
+        rowNum += 1
 
     # Initialize loop to go through links
-    lastHeatName = rows[r].get_text().lstrip().strip()
-    lastHeatLink = rows[r].find('a')['href']
-    m = match('scoresheet\d.asp\?.+&heatid=(\w+)&.+', lastHeatLink)
-    lastHeatId = m.group(1)
-    lastHeatLink = 'http://results.o2cm.com/' + lastHeatLink
-    r += 1
-    print(lastHeatName)
-    logging.info(lastHeatName)
+    lastHeatName, lastHeatId, lastHeatLink = parseHeatLink(rows[rowNum])
+    rowNum += 1
 
     # Ignoring combine event, read first event page, read all heats of event
     if ("combine" not in lastHeatName.lower()):
-        eventHeatPages = getHeatPages(lastHeatLink, compId, lastHeatId)
-        for i in range(len(eventHeatPages)):
-            readHeatPage(compId, eventHeatPages[i], lastHeatId, i)
+        readHeatPages(compId, lastHeatId, lastHeatLink)
 
     # Keep finding appropriate links
     # As before, read first event page, read all heats of event
     global db
-    while r < len(rows):
-        rowText = rows[r].get_text().strip()
+    while rowNum < len(rows):
+        rowText = rows[rowNum].get_text().strip()
+
+        # Don't care about combine events
+        if ("combine" in lastHeatName.lower()):
+            rowNum += 1
+            continue
         # Row is a link. Read event and heats.
-        if (rows[r].find('a') != None):
-            lastHeatName = rowText
-            lastHeatLink = rows[r].find('a')['href']
-            m = match('scoresheet\d.asp\?.+&heatid=(\w+)&.+', lastHeatLink)
-            lastHeatId = m.group(1)
-            lastHeatLink = 'http://results.o2cm.com/' + lastHeatLink
-            print(lastHeatName)
-            logging.info(lastHeatName)
-            if ("combine" in lastHeatName.lower()):
-                r += 1
-                continue
-            eventHeatPages = getHeatPages(lastHeatLink, compId, lastHeatId)
-            for i in range(len(eventHeatPages)):
-                readHeatPage(compId, eventHeatPages[i], lastHeatId, i)
+        elif (rows[rowNum].find('a') != None):
+            lastHeatName, lastHeatId, lastHeadLink = parseHeatLink(rows[rowNum])
+            readHeatPages(compId, lastHeatId, lastHeatLink)
         # Blank row
         elif (rowText == '----'):
             pass
         # Row is a couple
         else:
-            if ("combine" in lastHeatName.lower()):
-                r += 1
-                continue
+            parseCouple(rowText, compId, lastHeatId)
 
-            m = match('\d+\) (\d{1,3}) (.+) & (.+) \- (.+)', rowText)
-            state = 'N/A'
-            if (m != None):
-                state = m.group(4).strip()
-            else:
-                m = match('\d+\) (\d{1,3}) (.+) & (.+)', rowText)
-            coupleNumber = m.group(1).strip()
-            leaderString = m.group(2).strip()
-            leader = competitorName(leaderString)
-            followerString = m.group(3).strip()
-            follower = competitorName(followerString)
-            # print('%s - %s & %s from %s' % (coupleNumber, leader, follower, state))
-            # logging.info('%s - %s & %s from %s' % (coupleNumber, leader, follower, state))
+        rowNum += 1
 
-            global newCompetitorId
-            global competitors
+def parseCouple(rowText, compId, lastHeatId):
+    """
+    Parses 'rowText' for leader and follower information
 
-            # Add leader into database
-            if (leader in competitors):
-                leaderId = competitors[leader]
-            else:
-                competitors[leader] = newCompetitorId
-                leaderId = newCompetitorId
-                newCompetitorId += 1
-                try:
-                    db.insert("competitors",
-                              competitor_id=leaderId,
-                              first_name=leader[0],
-                              last_name=leader[1])
-                except IntegrityError as e:
-                    logging.error(e);
+    :param rowText: Text from row containing leader and follwer information
+    :param compId: id of competition
+    :param lastHeatId: id of heat to which to add competitiors
+    :effects: Adds competitors and entries to database
+    """
 
-            # Add follower into database
-            if (follower in competitors):
-                followerId = competitors[follower]
-            else:
-                competitors[follower] = newCompetitorId
-                followerId = newCompetitorId
-                newCompetitorId += 1
-                try:
-                    db.insert("competitors",
-                              competitor_id=followerId,
-                              first_name=follower[0],
-                              last_name=follower[1])
-                except IntegrityError as e:
-                    logging.error(e)
+    m = match('\d+\) (\d{1,3}) (.+) & (.+) \- (.+)', rowText)
+    state = 'N/A'
+    if (m != None):
+        state = m.group(4).strip()
+    else:
+        m = match('\d+\) (\d{1,3}) (.+) & (.+)', rowText)
+    coupleNumber = m.group(1).strip()
+    leaderString = m.group(2).strip()
+    leader = competitorName(leaderString)
+    followerString = m.group(3).strip()
+    follower = competitorName(followerString)
 
-            # Add appropriate entry to database
-            try:
-                db.insert("entries",
-                          competition_id=compId,
-                          event_id=lastHeatId,
-                          lead_id=leaderId,
-                          follow_id=followerId,
-                          competitor_number=coupleNumber)
-            except IntegrityError as e:
-                logging.error(e)
+    global newCompetitorId
+    global competitors
 
-        r += 1
+    # Add leader into database
+    if (leader in competitors):
+        leaderId = competitors[leader]
+    else:
+        competitors[leader] = newCompetitorId
+        leaderId = newCompetitorId
+        newCompetitorId += 1
+        try:
+            db.insert("competitors",
+                      competitor_id=leaderId,
+                      first_name=leader[0],
+                      last_name=leader[1])
+        except IntegrityError as e:
+            logging.error(e);
+
+    # Add follower into database
+    if (follower in competitors):
+        followerId = competitors[follower]
+    else:
+        competitors[follower] = newCompetitorId
+        followerId = newCompetitorId
+        newCompetitorId += 1
+        try:
+            db.insert("competitors",
+                      competitor_id=followerId,
+                      first_name=follower[0],
+                      last_name=follower[1])
+        except IntegrityError as e:
+            logging.error(e)
+
+    # Add appropriate entry to database
+    try:
+        db.insert("entries",
+                  competition_id=compId,
+                  event_id=lastHeatId,
+                  lead_id=leaderId,
+                  follow_id=followerId,
+                  competitor_number=coupleNumber)
+    except IntegrityError as e:
+        logging.error(e)
 
 def competitorName(name):
     """
@@ -346,6 +355,19 @@ def getHeatPages(heatUrl, compId, heatId):
     for i in range(1, numRounds):
         heatPageSoups.append(loadPage(heatUrlSimple, {'event': compId, 'heatId': heatId, 'selCount': i}, True))
     return heatPageSoups
+
+def readHeatPages(compId, heatId, heatLink):
+    """
+    Read all pages for rounds of 'heatId'
+
+    :param compId: string competition id
+    :param heatId: string id for heat
+    :param heatLink: string link to heat
+    """
+
+    eventHeatPages = getHeatPages(heatLink, compId, heatId)
+    for i in range(len(eventHeatPages)):
+        readHeatPage(compId, eventHeatPages[i], heatId, i)
 
 def readHeatPage(compId, heatPage, heatId, roundNum):
     """
