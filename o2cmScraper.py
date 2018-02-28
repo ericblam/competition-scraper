@@ -8,6 +8,8 @@ from loadPage import loadPage
 from re import match
 from utils import *
 
+LOG_FILE_NAME = "o2cmScraper.log"
+
 db = None
 compsOfInterest = ['rpi17']
 newCompetitorId = 0
@@ -66,7 +68,7 @@ def initialize():
     logLevel = logging.DEBUG
     if (args.verbose):
         logLevel = logging.INFO
-    logging.basicConfig(filename="o2cmScraper.log",
+    logging.basicConfig(filename=LOG_FILE_NAME,
                         format="%(asctime)s %(name)-12s %(levelname)-8s %(message)s",
                         datefmt="%y-%m-%d %H:%M:%S",
                         level=logLevel)
