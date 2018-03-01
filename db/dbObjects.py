@@ -6,14 +6,14 @@ class Competition(object):
     """
 
     def __init__(self,
-             compId,
-             compPrefix,
-             compName,
-             compDate):
-    self.d_compId = compId
-    self.d_compPrefix = compPrefix
-    self.d_compName = compName
-    self.d_compDate = compDate
+                 comp_id,
+                 comp_prefix,
+                 comp_name,
+                 comp_date):
+        self.d_compId = compId
+        self.d_compPrefix = compPrefix
+        self.d_compName = compName
+        self.d_compDate = compDate
 
 
 class CompetitionEvent(object):
@@ -22,14 +22,14 @@ class CompetitionEvent(object):
     """
 
     def __init__(self,
-             compId,
-             eventId,
-             eventLevel,
-             category):
-    self.d_compId = compId
-    self.d_eventId = eventId
-    self.d_eventLevel = eventLevel
-    self.d_category = category
+                 comp_id,
+                 event_id,
+                 event_level,
+                 category):
+        self.d_compId = compId
+        self.d_eventId = eventId
+        self.d_eventLevel = eventLevel
+        self.d_category = category
 
 
 class CompetitionEventDance(object):
@@ -38,12 +38,12 @@ class CompetitionEventDance(object):
     """
 
     def __init__(self,
-             compId,
-             eventId,
-             dance):
-    self.d_compId = compId
-    self.d_eventId = eventId
-    self.d_dance = dance
+                 comp_id,
+                 event_id,
+                 dance):
+        self.d_compId = compId
+        self.d_eventId = eventId
+        self.d_dance = dance
 
 
 class CompetitionEntry(object):
@@ -52,16 +52,16 @@ class CompetitionEntry(object):
     """
 
     def __init__(self,
-             compId,
-             eventId,
-             competitorNumber,
-             leader,
-             follwer):
-    self.d_compId = compId
-    self.d_eventId = eventId
-    self.d_competitorNumber = competitorNumber
-    self.d_leader = leader
-    self.d_follwer = follwer
+                 comp_id,
+                 event_id,
+                 competitor_number,
+                 leader,
+                 follwer):
+        self.d_compId = compId
+        self.d_eventId = eventId
+        self.d_competitorNumber = competitorNumber
+        self.d_leader = leader
+        self.d_follwer = follwer
 
 
 class Competitor(object):
@@ -70,12 +70,12 @@ class Competitor(object):
     """
 
     def __init__(self,
-             competitorId,
-             firstName,
-             lastName):
-    self.d_competitorId = competitorId
-    self.d_firstName = firstName
-    self.d_lastName = lastName
+                 competitor_id,
+                 first_name,
+                 last_name):
+        self.d_competitorId = competitorId
+        self.d_firstName = firstName
+        self.d_lastName = lastName
 
 
 class CompetitionEventPlacement(object):
@@ -84,14 +84,14 @@ class CompetitionEventPlacement(object):
     """
 
     def __init__(self,
-             compId,
-             eventId,
-             competitorNumber,
-             placement):
-    self.d_compId = compId
-    self.d_eventId = eventId
-    self.d_competitorNumber = competitorNumber
-    self.d_placement = placement
+                 comp_id,
+                 event_id,
+                 competitor_number,
+                 placement):
+        self.d_compId = compId
+        self.d_eventId = eventId
+        self.d_competitorNumber = competitorNumber
+        self.d_placement = placement
 
 
 class CompetitionDancePlacement(object):
@@ -100,14 +100,14 @@ class CompetitionDancePlacement(object):
     """
 
     def __init__(self,
-             compId,
-             eventId,
-             competitorNumber,
-             placement):
-    self.d_compId = compId
-    self.d_eventId = eventId
-    self.d_competitorNumber = competitorNumber
-    self.d_placement = placement
+                 comp_id,
+                 event_id,
+                 competitor_number,
+                 placement):
+        self.d_compId = compId
+        self.d_eventId = eventId
+        self.d_competitorNumber = competitorNumber
+        self.d_placement = placement
 
 
 class CompetitionEventResult(object):
@@ -116,22 +116,22 @@ class CompetitionEventResult(object):
     """
 
     def __init__(self,
-             compId,
-             eventId,
-             eventDance,
-             judgeId,
-             competitorNumber,
-             round,
-             placement,
-             callback):
-    self.d_compId = compId
-    self.d_eventId = eventId
-    self.d_eventDance = eventDance
-    self.d_judgeId = judgeId
-    self.d_competitorNumber = competitorNumber
-    self.d_round = round
-    self.d_placement = placement
-    self.d_callback = callback
+                 comp_id,
+                 event_id,
+                 event_dance,
+                 judge_id,
+                 competitor_number,
+                 round,
+                 placement,
+                 callback):
+        self.d_compId = compId
+        self.d_eventId = eventId
+        self.d_eventDance = eventDance
+        self.d_judgeId = judgeId
+        self.d_competitorNumber = competitorNumber
+        self.d_round = round
+        self.d_placement = placement
+        self.d_callback = callback
 
 
 class CompetitionEventJudge(object):
@@ -140,11 +140,11 @@ class CompetitionEventJudge(object):
     """
 
     def __init__(self,
-             compId,
-             judgeId,
-             judgeName):
-    self.d_compId = compId
-    self.d_judgeId = judgeId
-    self.d_judgeName = judgeName
+                 comp_id,
+                 judge_id,
+                 judge_name):
+        self.d_compId = compId
+        self.d_judgeId = judgeId
+        self.d_judgeName = judgeName
 
 

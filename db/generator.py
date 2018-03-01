@@ -1,5 +1,11 @@
 import re
 
+def dbNameConvert(name, delimiter="", caps=False):
+    tokens = name.split("_")
+    if caps:
+        return delimiter.join(x.title() for x in tokens)
+    return tokens[0] + delimiter.join(x.title() for x in tokens[1:])
+
 schemaFile = open("schema_setup.sql", "r")
 dbFile = open("dbObjects.py", "w")
 
@@ -15,10 +21,9 @@ for line in schemaFile:
         continue
 
     if isTable and ("primary key" in line or ");" in line):
-        tableNameTokens = tableName.split("_")
-        objectName = "".join(x.title() for x in tableNameTokens)
-        titleName = " ".join(x.title() for x in tableNameTokens)
-        
+        objectName = dbNameConvert(tableName, "", True)
+        titleName = dbNameConvert(tableName, " ", True)
+
         dbFile.write('class %s(object):\n'
         '    """\n'
         '    %s wrapper class\n'
@@ -26,9 +31,9 @@ for line in schemaFile:
         '\n'
         '    def __init__(self,\n' % (objectName, titleName))
         
-        dbFile.write(",\n".join('             ' + x for x in properties))
+        dbFile.write(",\n".join('                 ' + x for x in properties))
         dbFile.write('):\n')
-        dbFile.write("\n".join('    self.d_%s = %s' % (x, x) for x in properties))
+        dbFile.write("\n".join('        self.d_%s = %s' % ((dbNameConvert(x),) * 2) for x in properties))
         dbFile.write("\n\n\n")
         
         isTable = False
@@ -37,9 +42,7 @@ for line in schemaFile:
 
     if isTable:
         m = re.match("\s*,?\s*([^\s]+)", line)
-        propertyTokens = m.group(1).split("_")
-        property = propertyTokens[0] + "".join(x.title() for x in propertyTokens[1:])
-        properties.append(property)
+        properties.append(m.group(1))
 
         
 dbFile.close()
