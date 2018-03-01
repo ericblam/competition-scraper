@@ -4,11 +4,11 @@ import signal
 from math import floor
 from pg import DB, IntegrityError
 
-from loadPage import loadPage
 from re import match
-from utils import *
+from util.comp_utils import *
+from util.loadPage import loadPage
 
-LOG_FILE_NAME = "o2cmScraper.log"
+LOG_FILE_NAME = ".o2cmScraper.log"
 
 db = None
 compsOfInterest = ['rpi17']
