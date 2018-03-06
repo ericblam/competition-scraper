@@ -6,7 +6,7 @@ from pg import DB
 from dbObjects import *
 from dbAccessor import *
 
-_db = DB(dbname = 'ballroom_competitions',
+db = DB(dbname = 'ballroom_competitions',
         host   = 'localhost',
         port   =  5432,
         user   = 'postgres',
@@ -16,7 +16,7 @@ class TestInserts(unittest.TestCase):
 
     def test_competition_insert(self):
         with open('schema_setup.sql', "r") as schemaFile:
-            _db.query(schemaFile.read())
+            db.query(schemaFile.read())
 
         val = ('rpi17', 'rpi', 'RPI Dancesport Competition', datetime.date(2017, 4, 2))
         queryVal = ('rpi17', 'rpi', 'RPI Dancesport Competition', str(datetime.date(2017, 4, 2)))
