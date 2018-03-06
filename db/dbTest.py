@@ -26,7 +26,7 @@ class TestInserts(unittest.TestCase):
 
         res = db.query('select * from competition').getresult()
         self.assertEqual(len(res), 1)
-        self.assertEqual(res[0], val)        
+        self.assertEqual(val, res[0])
 
     def test_competition_list_insert(self):
         with open('schema_setup.sql', "r") as schemaFile:
@@ -43,8 +43,8 @@ class TestInserts(unittest.TestCase):
 
         res = db.query('select * from competition').getresult()
         self.assertEqual(len(res), len(vals))
-        self.assertEqual(res[0], val[0])
-        self.assertEqual(res[1], val[1])
+        self.assertEqual(vals[0], res[0])
+        self.assertEqual(vals[1], res[1])
 
 if __name__ == '__main__':
     unittest.main()
