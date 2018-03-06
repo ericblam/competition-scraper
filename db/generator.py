@@ -1,15 +1,63 @@
 import re
 
-def dbNameConvert(name, delimiter="", caps=False):
+def dbNameToDelimited(name, delimiter="", caps=False):
     tokens = name.split("_")
     if caps:
         return delimiter.join(x.title() for x in tokens)
     return tokens[0] + delimiter.join(x.title() for x in tokens[1:])
 
-schemaFile = open("schema_setup.sql", "r")
-dbFile = open("dbObjects.py", "w")
+def writeDbObject(dboFile, tableName, properties):
+    className = dbNameToDelimited(tableName, "", True)
+    titleName = dbNameToDelimited(tableName, " ", True)
 
-dbFile.write('""" File automatically generated with generator.py """\n\n')
+    dboFile.write('class %s(object):\n'
+                       '    """\n'
+                       '    %s wrapper class\n'
+                       '    """\n'
+                       '\n'
+                       '    def __init__(self,\n' % (className, titleName))
+
+    dboFile.write(",\n".join('                 ' + x for x in properties))
+    dboFile.write('):\n')
+    dboFile.write("\n".join('        self.d_%s = %s' % (dbNameToDelimited(x), x) for x in properties))
+    dboFile.write("\n\n\n")
+
+def writeDbAccessor(dbaFile, tableName, properties):
+    objectName = dbNameToDelimited(tableName, "", False)
+    className = dbNameToDelimited(tableName, "", True)
+    titleName = dbNameToDelimited(tableName, " ", True)
+    dbaFile.write('def insert%s(%s):\n' % (className, objectName))
+    dbaFile.write('    """\n')
+    dbaFile.write('    Function to insert single %s object into database\n' % className)
+    dbaFile.write('    """\n\n')
+    dbaFile.write('    db.query("INSERT INTO %s"\n' % tableName)
+    dbaFile.write('             "(%s) "\n' % ', '.join(properties))
+    dbaFile.write('             "VALUES "\n')
+    formatTuple = ', '.join("'%s'" for x in properties)
+    spaceString = ',\n' + ' ' * (13 + len(formatTuple) + 8)
+    objectTuple = spaceString.join("%s.__dict__['%s']" % (objectName, 'd_' + dbNameToDelimited(x, "", False)) for x in properties)
+    dbaFile.write('             "(%s)" %% (%s)\n' % (formatTuple, objectTuple))
+    dbaFile.write('    )\n\n')
+
+    dbaFile.write('def insert%sList(%sList):\n' % (className, objectName))
+    dbaFile.write('    """\n')
+    dbaFile.write('    Function to insert list of %s objects into database\n' % className)
+    dbaFile.write('    """\n\n')
+    dbaFile.write('    pass\n\n')
+
+schemaFile = open("schema_setup.sql", "r")
+dbObjectFile = open("dbObjects.py", "w")
+dbAccessorFile = open("dbAccessor.py", "w")
+
+dbObjectFile.write('""" File automatically generated with generator.py """\n\n')
+dbAccessorFile.write('""" File automatically generated with generator.py """\n\n')
+dbAccessorFile.write('from pg import DB, IntegrityError\n\n')
+dbAccessorFile.write("db = DB(dbname = 'ballroom_competitions',\n")
+dbAccessorFile.write("        host   = 'localhost',\n")
+dbAccessorFile.write("        port   =  5432,\n")
+dbAccessorFile.write("        user   = 'postgres',\n")
+dbAccessorFile.write("        passwd = 'postgres')\n\n")
+
 isTable = False
 tableName = ""
 properties=[]
@@ -21,20 +69,8 @@ for line in schemaFile:
         continue
 
     if isTable and ("primary key" in line or ");" in line):
-        objectName = dbNameConvert(tableName, "", True)
-        titleName = dbNameConvert(tableName, " ", True)
-
-        dbFile.write('class %s(object):\n'
-        '    """\n'
-        '    %s wrapper class\n'
-        '    """\n'
-        '\n'
-        '    def __init__(self,\n' % (objectName, titleName))
-        
-        dbFile.write(",\n".join('                 ' + x for x in properties))
-        dbFile.write('):\n')
-        dbFile.write("\n".join('        self.d_%s = %s' % ((dbNameConvert(x),) * 2) for x in properties))
-        dbFile.write("\n\n\n")
+        writeDbObject(dbObjectFile, tableName, properties)
+        writeDbAccessor(dbAccessorFile, tableName, properties)
         
         isTable = False
         properties = []
@@ -44,6 +80,6 @@ for line in schemaFile:
         m = re.match("\s*,?\s*([^\s]+)", line)
         properties.append(m.group(1))
 
-        
-dbFile.close()
+dbAccessorFile.close()
+dbObjectFile.close()
 schemaFile.close()
