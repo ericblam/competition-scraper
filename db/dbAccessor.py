@@ -2,11 +2,34 @@
 
 from pg import DB, IntegrityError
 
+import os
+
+_dir = os.path.dirname(__file__) + "/"
+
 _db = DB(dbname = 'ballroom_competitions',
          host   = 'localhost',
          port   =  5432,
          user   = 'postgres',
          passwd = 'postgres')
+
+def dbReset():
+    """
+    Resets and reconfigures database
+    """
+
+    with open(_dir + "schema_setup.sql") as sqlClearing:
+        _db.query(sqlClearing.read())
+
+def dbClearComp(compId):
+    """
+    Removes data for comp compId
+    """
+
+    with open(_dir + "reset_comp_data.sql") as queryFile:
+        query = ""
+        for line in queryFile:
+            query += line % compId
+        _db.query(query)
 
 def insertCompetition(competition):
     """

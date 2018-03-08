@@ -1,5 +1,8 @@
 import re
 
+import os
+_dir = os.path.dirname(__file__) + "/"
+
 def dbNameToDelimited(name, delimiter="", caps=False):
     tokens = name.split("_")
     if caps:
@@ -21,6 +24,25 @@ def writeDbObject(dboFile, tableName, properties):
     dboFile.write('):\n')
     dboFile.write("\n".join('        self.d_%s = %s' % (dbNameToDelimited(x), x) for x in properties))
     dboFile.write("\n\n\n")
+
+def writeDbReset(dbaFile):
+    dbaFile.write('def dbReset():\n')
+    dbaFile.write('    """\n')
+    dbaFile.write('    Resets and reconfigures database\n')
+    dbaFile.write('    """\n\n')
+    dbaFile.write('    with open(_dir + "schema_setup.sql") as sqlClearing:\n')
+    dbaFile.write('        _db.query(sqlClearing.read())\n\n')
+
+def writeDbResetComp(dbaFile):
+    dbaFile.write('def dbClearComp(compId):\n')
+    dbaFile.write('    """\n')
+    dbaFile.write('    Removes data for comp compId\n')
+    dbaFile.write('    """\n\n')
+    dbaFile.write('    with open(_dir + "reset_comp_data.sql") as queryFile:\n')
+    dbaFile.write('        query = ""\n')
+    dbaFile.write('        for line in queryFile:\n')
+    dbaFile.write('            query += line % compId\n')
+    dbaFile.write('        _db.query(query)\n\n')
 
 def writeDbAccessor(dbaFile, tableName, properties):
     objectName = dbNameToDelimited(tableName, "", False)
@@ -54,18 +76,21 @@ def writeDbAccessor(dbaFile, tableName, properties):
     dbaFile.write('              "VALUES "\n')
     dbaFile.write('              "%s" % ",".join(values))\n\n')
 
-schemaFile = open("schema_setup.sql", "r")
-dbObjectFile = open("dbObjects.py", "w")
-dbAccessorFile = open("dbAccessor.py", "w")
+schemaFile = open(_dir + "schema_setup.sql", "r")
+dbObjectFile = open(_dir + "dbObjects.py", "w")
+dbAccessorFile = open(_dir + "dbAccessor.py", "w")
 
 dbObjectFile.write('""" File automatically generated with generator.py """\n\n')
 dbAccessorFile.write('""" File automatically generated with generator.py """\n\n')
 dbAccessorFile.write('from pg import DB, IntegrityError\n\n')
+dbAccessorFile.write('import os\n\n_dir = os.path.dirname(__file__) + "/"\n\n')
 dbAccessorFile.write("_db = DB(dbname = 'ballroom_competitions',\n")
 dbAccessorFile.write("         host   = 'localhost',\n")
 dbAccessorFile.write("         port   =  5432,\n")
 dbAccessorFile.write("         user   = 'postgres',\n")
 dbAccessorFile.write("         passwd = 'postgres')\n\n")
+writeDbReset(dbAccessorFile)
+writeDbResetComp(dbAccessorFile)
 
 isTable = False
 tableName = ""
