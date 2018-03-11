@@ -81,10 +81,48 @@ class TestInserts(unittest.TestCase):
         insertCompetitionList(comps)
 
         dbClearComp("rpi17")
-        
+
         res = db.query('select * from competition').getresult()
         self.assertEqual(len(res), 1)
         self.assertEqual(vals[0], res[0])
-        
+
+    def test_select_single(self):
+        with open(_dir + 'schema_setup.sql', "r") as schemaFile:
+            db.query(schemaFile.read())
+
+        vals = [('rpi16', 'rpi', 'RPI Dancesport Competition', datetime.date(2016, 4, 2))]
+        queryVals = [val[0:len(val)-1] + (str(val[len(val)-1]),) for val in vals]
+
+        comps = []
+        for v in vals:
+            comps.append(Competition(*v))
+        insertCompetitionList(comps)
+
+        res = selectFromCompetition()
+        self.assertEqual(len(res), 1)
+        self.assertTrue(isinstance(res[0], Competition))
+        self.assertEqual(res[0].d_compId, "rpi16")
+
+    def test_select_two(self):
+        with open(_dir + 'schema_setup.sql', "r") as schemaFile:
+            db.query(schemaFile.read())
+
+        vals = [('rpi16', 'rpi', 'RPI Dancesport Competition', datetime.date(2016, 4, 2)),
+                ('rpi17', 'rpi', 'RPI Dancesport Competition', datetime.date(2017, 3, 25))]
+        queryVals = [val[0:len(val)-1] + (str(val[len(val)-1]),) for val in vals]
+
+        comps = []
+        for v in vals:
+            comps.append(Competition(*v))
+        insertCompetitionList(comps)
+
+        res = selectFromCompetition()
+        self.assertEqual(len(res), 2)
+        self.assertTrue(isinstance(res[0], Competition))
+        self.assertTrue(isinstance(res[1], Competition))
+        self.assertEqual(res[0].d_compId, "rpi16")
+        self.assertEqual(res[1].d_compId, "rpi17")
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -1,5 +1,7 @@
 """ File automatically generated with generator.py """
 
+from dbObjects import *
+
 from pg import DB, IntegrityError
 
 import os
@@ -61,6 +63,18 @@ def insertCompetitionList(competitionList):
               "VALUES "
               "%s" % ",".join(values))
 
+def selectFromCompetition():
+    """
+    Does select * from competition
+    Exercise caution - this retrieves all rows of competition
+    """
+
+    dbRes = _db.query("SELECT * FROM competition")
+    res = []
+    for row in dbRes.dictresult():
+        res.append(Competition(row["comp_id"], row["comp_prefix"], row["comp_name"], row["comp_date"]))
+    return res
+
 def insertCompetitionEvent(competitionEvent):
     """
     Function to insert single CompetitionEvent object into database
@@ -91,6 +105,18 @@ def insertCompetitionEventList(competitionEventList):
               "VALUES "
               "%s" % ",".join(values))
 
+def selectFromCompetitionEvent():
+    """
+    Does select * from competition_event
+    Exercise caution - this retrieves all rows of competition_event
+    """
+
+    dbRes = _db.query("SELECT * FROM competition_event")
+    res = []
+    for row in dbRes.dictresult():
+        res.append(CompetitionEvent(row["comp_id"], row["event_id"], row["event_level"], row["category"]))
+    return res
+
 def insertCompetitionEventDance(competitionEventDance):
     """
     Function to insert single CompetitionEventDance object into database
@@ -118,6 +144,18 @@ def insertCompetitionEventDanceList(competitionEventDanceList):
               "(comp_id, event_id, dance) "
               "VALUES "
               "%s" % ",".join(values))
+
+def selectFromCompetitionEventDance():
+    """
+    Does select * from competition_event_dance
+    Exercise caution - this retrieves all rows of competition_event_dance
+    """
+
+    dbRes = _db.query("SELECT * FROM competition_event_dance")
+    res = []
+    for row in dbRes.dictresult():
+        res.append(CompetitionEventDance(row["comp_id"], row["event_id"], row["dance"]))
+    return res
 
 def insertCompetitionEntry(competitionEntry):
     """
@@ -151,6 +189,18 @@ def insertCompetitionEntryList(competitionEntryList):
               "VALUES "
               "%s" % ",".join(values))
 
+def selectFromCompetitionEntry():
+    """
+    Does select * from competition_entry
+    Exercise caution - this retrieves all rows of competition_entry
+    """
+
+    dbRes = _db.query("SELECT * FROM competition_entry")
+    res = []
+    for row in dbRes.dictresult():
+        res.append(CompetitionEntry(row["comp_id"], row["event_id"], row["competitor_number"], row["leader"], row["follwer"]))
+    return res
+
 def insertCompetitor(competitor):
     """
     Function to insert single Competitor object into database
@@ -178,6 +228,18 @@ def insertCompetitorList(competitorList):
               "(competitor_id, first_name, last_name) "
               "VALUES "
               "%s" % ",".join(values))
+
+def selectFromCompetitor():
+    """
+    Does select * from competitor
+    Exercise caution - this retrieves all rows of competitor
+    """
+
+    dbRes = _db.query("SELECT * FROM competitor")
+    res = []
+    for row in dbRes.dictresult():
+        res.append(Competitor(row["competitor_id"], row["first_name"], row["last_name"]))
+    return res
 
 def insertCompetitionEventPlacement(competitionEventPlacement):
     """
@@ -209,6 +271,18 @@ def insertCompetitionEventPlacementList(competitionEventPlacementList):
               "VALUES "
               "%s" % ",".join(values))
 
+def selectFromCompetitionEventPlacement():
+    """
+    Does select * from competition_event_placement
+    Exercise caution - this retrieves all rows of competition_event_placement
+    """
+
+    dbRes = _db.query("SELECT * FROM competition_event_placement")
+    res = []
+    for row in dbRes.dictresult():
+        res.append(CompetitionEventPlacement(row["comp_id"], row["event_id"], row["competitor_number"], row["placement"]))
+    return res
+
 def insertCompetitionDancePlacement(competitionDancePlacement):
     """
     Function to insert single CompetitionDancePlacement object into database
@@ -238,6 +312,18 @@ def insertCompetitionDancePlacementList(competitionDancePlacementList):
               "(comp_id, event_id, competitor_number, placement) "
               "VALUES "
               "%s" % ",".join(values))
+
+def selectFromCompetitionDancePlacement():
+    """
+    Does select * from competition_dance_placement
+    Exercise caution - this retrieves all rows of competition_dance_placement
+    """
+
+    dbRes = _db.query("SELECT * FROM competition_dance_placement")
+    res = []
+    for row in dbRes.dictresult():
+        res.append(CompetitionDancePlacement(row["comp_id"], row["event_id"], row["competitor_number"], row["placement"]))
+    return res
 
 def insertCompetitionEventResult(competitionEventResult):
     """
@@ -277,6 +363,18 @@ def insertCompetitionEventResultList(competitionEventResultList):
               "VALUES "
               "%s" % ",".join(values))
 
+def selectFromCompetitionEventResult():
+    """
+    Does select * from competition_event_result
+    Exercise caution - this retrieves all rows of competition_event_result
+    """
+
+    dbRes = _db.query("SELECT * FROM competition_event_result")
+    res = []
+    for row in dbRes.dictresult():
+        res.append(CompetitionEventResult(row["comp_id"], row["event_id"], row["event_dance"], row["judge_id"], row["competitor_number"], row["round"], row["placement"], row["callback"]))
+    return res
+
 def insertCompetitionEventJudge(competitionEventJudge):
     """
     Function to insert single CompetitionEventJudge object into database
@@ -304,4 +402,16 @@ def insertCompetitionEventJudgeList(competitionEventJudgeList):
               "(comp_id, judge_id, judge_name) "
               "VALUES "
               "%s" % ",".join(values))
+
+def selectFromCompetitionEventJudge():
+    """
+    Does select * from competition_event_judge
+    Exercise caution - this retrieves all rows of competition_event_judge
+    """
+
+    dbRes = _db.query("SELECT * FROM competition_event_judge")
+    res = []
+    for row in dbRes.dictresult():
+        res.append(CompetitionEventJudge(row["comp_id"], row["judge_id"], row["judge_name"]))
+    return res
 

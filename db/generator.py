@@ -76,12 +76,25 @@ def writeDbAccessor(dbaFile, tableName, properties):
     dbaFile.write('              "VALUES "\n')
     dbaFile.write('              "%s" % ",".join(values))\n\n')
 
+    dbaFile.write('def selectFrom%s():\n' % className)
+    dbaFile.write('    """\n')
+    dbaFile.write('    Does select * from %s\n' % tableName)
+    dbaFile.write('    Exercise caution - this retrieves all rows of %s\n' % tableName)
+    dbaFile.write('    """\n\n')
+    dbaFile.write('    dbRes = _db.query("SELECT * FROM %s")\n' % tableName)
+    dbaFile.write('    res = []\n')
+    dbaFile.write('    for row in dbRes.dictresult():\n')
+    propertyList = ", ".join('row["%s"]' % p for p in properties)
+    dbaFile.write('        res.append(%s(%s))\n' % (className, propertyList))
+    dbaFile.write('    return res\n\n')
+
 schemaFile = open(_dir + "schema_setup.sql", "r")
 dbObjectFile = open(_dir + "dbObjects.py", "w")
 dbAccessorFile = open(_dir + "dbAccessor.py", "w")
 
 dbObjectFile.write('""" File automatically generated with generator.py """\n\n')
 dbAccessorFile.write('""" File automatically generated with generator.py """\n\n')
+dbAccessorFile.write('from dbObjects import *\n\n')
 dbAccessorFile.write('from pg import DB, IntegrityError\n\n')
 dbAccessorFile.write('import os\n\n_dir = os.path.dirname(__file__) + "/"\n\n')
 dbAccessorFile.write("_db = DB(dbname = 'ballroom_competitions',\n")
@@ -105,7 +118,7 @@ for line in schemaFile:
     if isTable and ("primary key" in line or ");" in line):
         writeDbObject(dbObjectFile, tableName, properties)
         writeDbAccessor(dbAccessorFile, tableName, properties)
-        
+
         isTable = False
         properties = []
         continue
