@@ -3,9 +3,9 @@ import urllib.error, urllib.parse, urllib.request
 from bs4 import BeautifulSoup
 from tidylib import tidy_document
 
-CACHE_DIR = ".cache/"
+CACHE_DIR = os.path.dirname(__file__) + "/../.cache/"
 
-def loadPage(url, data={}, post=False):
+def loadPage(url, data={}, post=False, forceReload=False):
     """
     Loads a page from a url with data (uses GET if !post, else uses POST)
     """
@@ -17,12 +17,12 @@ def loadPage(url, data={}, post=False):
     if (len(sortedDataString) > 0):
         cacheFilename += "_" + ("POST" if post else "GET") + "_" + sortedDataString
 
-    cacheFilename = cacheFilename.replace("http://", "").replace("/", "_")
+    cacheFilename = cacheFilename.replace("https://","").replace("http://", "").replace("/", "_")
     if (not os.path.exists(CACHE_DIR)):
         os.makedirs(CACHE_DIR)
 
     cacheFilename = CACHE_DIR + cacheFilename
-    if (os.path.exists(cacheFilename)):
+    if (not forceReload and os.path.exists(cacheFilename)):
         cachedPage = open(cacheFilename)
         tidiedPage = cachedPage.read()
         cachedPage.close()
