@@ -1,6 +1,6 @@
 """ File automatically generated with generator.py """
 
-from dbObjects import *
+from db.dbObjects import *
 
 from pg import DB, IntegrityError
 

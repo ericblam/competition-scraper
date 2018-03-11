@@ -94,7 +94,7 @@ dbAccessorFile = open(_dir + "dbAccessor.py", "w")
 
 dbObjectFile.write('""" File automatically generated with generator.py """\n\n')
 dbAccessorFile.write('""" File automatically generated with generator.py """\n\n')
-dbAccessorFile.write('from dbObjects import *\n\n')
+dbAccessorFile.write('from db.dbObjects import *\n\n')
 dbAccessorFile.write('from pg import DB, IntegrityError\n\n')
 dbAccessorFile.write('import os\n\n_dir = os.path.dirname(__file__) + "/"\n\n')
 dbAccessorFile.write("_db = DB(dbname = 'ballroom_competitions',\n")

@@ -10,8 +10,15 @@ from db.dbAccessor import *
 
 LOG_FILE_NAME = ".o2cmScraper.log"
 
+g_nextCompetitorId = 0
+g_competitors = {} # (firstName, lastName): competitorId
+
 def main():
-    initialize()
+    args = initialize()
+
+    urlQueue = []
+    compsOfInterest = args.comps
+
 
 def parseArgs():
     """
@@ -31,7 +38,7 @@ def parseArgs():
                         action  = 'store_true',
                         default = False,
                         help    = 'resets database')
-    parser.add_argument("--verbose"
+    parser.add_argument("--verbose",
                         dest    = "verbose",
                         action  = 'store_true',
                         default = False,
@@ -55,7 +62,10 @@ def initialize():
     Parses command line arguments, opens log, sets up signal handlers
     """
 
-    parseArgs()
+    global g_competitors
+    global g_nextCompetitorId
+
+    args = parseArgs()
 
     # Open Log
     logLevel = logging.DEBUG
@@ -67,6 +77,14 @@ def initialize():
                         level    = logLevel)
 
     signal.signal(signal.SIGINT, sigintHandler)
+
+    results = selectFromCompetitor()
+    for res in results:
+        g_competitors[(res.d_firstName, res.d_lastName)] = res.d_competitorId
+    if (len(results) > 0):
+        g_nextCompetitorId = max(g_competitors.values()) + 1
+
+    return args
 
 
 

@@ -4,10 +4,8 @@ import unittest
 
 from pg import DB
 
-import dbObjects
-import dbAccessor
-
-_dir = os.path.dirname(__file__) + "/"
+import db.dbObjects as dbObjects
+import db.dbAccessor as dbAccessor
 
 db = DB(dbname = 'ballroom_competitions',
         host   = 'localhost',
@@ -16,7 +14,7 @@ db = DB(dbname = 'ballroom_competitions',
         passwd = 'postgres')
 
 def resetDb():
-    with open(_dir + 'schema_setup.sql', "r") as schemaFile:
+    with open('db/schema_setup.sql', "r") as schemaFile:
         db.query(schemaFile.read())
 
 
