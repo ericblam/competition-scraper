@@ -1,6 +1,6 @@
-def parseEvent(str):
+def parseEventName(str):
     """
-    Normalizes event name
+    Normalizes event name, returning level and category
     """
 
     cleanString = str.lower().strip()
@@ -44,7 +44,7 @@ def parseEvent(str):
 
     return level, category
 
-def getDance(str):
+def normalizeDanceName(str):
     """
     Normalizes dance name
     """
