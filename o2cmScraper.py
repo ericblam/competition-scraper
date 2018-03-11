@@ -3,7 +3,7 @@ import logging
 import signal
 
 from util.utils import *
-from util.comp_utils import *
+from util.compUtils import *
 from util.loadPage import loadPage
 from db.dbObjects import *
 from db.dbAccessor import *
