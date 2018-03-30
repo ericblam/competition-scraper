@@ -14,15 +14,20 @@ def writeDbObject(dboFile, tableName, properties):
     titleName = dbNameToDelimited(tableName, " ", True)
 
     dboFile.write('class %s(object):\n'
-                       '    """\n'
-                       '    %s wrapper class\n'
-                       '    """\n'
-                       '\n'
-                       '    def __init__(self,\n' % (className, titleName))
+                  '    """\n'
+                  '    %s wrapper class\n'
+                  '    """\n'
+                  '\n'
+                  '    def __init__(self,\n' % (className, titleName))
 
     dboFile.write(",\n".join('                 ' + x for x in properties))
     dboFile.write('):\n')
     dboFile.write("\n".join('        self.d_%s = %s' % (dbNameToDelimited(x), x) for x in properties))
+    dboFile.write("\n\n")
+    dboFile.write("    def __str__(self):\n")
+    toStringFormat = ", ".join("d_%s='%%s'" % dbNameToDelimited(x) for x in properties)
+    formatTuple =    ", ".join("self.d_%s" % dbNameToDelimited(x) for x in properties)
+    dboFile.write("        return \"{%s: %s}\" %% (%s)\n" % (className, toStringFormat, formatTuple))
     dboFile.write("\n\n\n")
 
 def writeDbReset(dbaFile):

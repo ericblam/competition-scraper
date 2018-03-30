@@ -15,6 +15,10 @@ class Competition(object):
         self.d_compName = comp_name
         self.d_compDate = comp_date
 
+    def __str__(self):
+        return "{Competition: d_compId='%s', d_compPrefix='%s', d_compName='%s', d_compDate='%s'}" % (self.d_compId, self.d_compPrefix, self.d_compName, self.d_compDate)
+
+
 
 class CompetitionEvent(object):
     """
@@ -31,6 +35,10 @@ class CompetitionEvent(object):
         self.d_eventLevel = event_level
         self.d_category = category
 
+    def __str__(self):
+        return "{CompetitionEvent: d_compId='%s', d_eventId='%s', d_eventLevel='%s', d_category='%s'}" % (self.d_compId, self.d_eventId, self.d_eventLevel, self.d_category)
+
+
 
 class CompetitionEventDance(object):
     """
@@ -44,6 +52,10 @@ class CompetitionEventDance(object):
         self.d_compId = comp_id
         self.d_eventId = event_id
         self.d_dance = dance
+
+    def __str__(self):
+        return "{CompetitionEventDance: d_compId='%s', d_eventId='%s', d_dance='%s'}" % (self.d_compId, self.d_eventId, self.d_dance)
+
 
 
 class CompetitionEntry(object):
@@ -63,6 +75,10 @@ class CompetitionEntry(object):
         self.d_leader = leader
         self.d_follwer = follwer
 
+    def __str__(self):
+        return "{CompetitionEntry: d_compId='%s', d_eventId='%s', d_competitorNumber='%s', d_leader='%s', d_follwer='%s'}" % (self.d_compId, self.d_eventId, self.d_competitorNumber, self.d_leader, self.d_follwer)
+
+
 
 class Competitor(object):
     """
@@ -76,6 +92,10 @@ class Competitor(object):
         self.d_competitorId = competitor_id
         self.d_firstName = first_name
         self.d_lastName = last_name
+
+    def __str__(self):
+        return "{Competitor: d_competitorId='%s', d_firstName='%s', d_lastName='%s'}" % (self.d_competitorId, self.d_firstName, self.d_lastName)
+
 
 
 class CompetitionEventPlacement(object):
@@ -93,6 +113,10 @@ class CompetitionEventPlacement(object):
         self.d_competitorNumber = competitor_number
         self.d_placement = placement
 
+    def __str__(self):
+        return "{CompetitionEventPlacement: d_compId='%s', d_eventId='%s', d_competitorNumber='%s', d_placement='%s'}" % (self.d_compId, self.d_eventId, self.d_competitorNumber, self.d_placement)
+
+
 
 class CompetitionDancePlacement(object):
     """
@@ -108,6 +132,10 @@ class CompetitionDancePlacement(object):
         self.d_eventId = event_id
         self.d_competitorNumber = competitor_number
         self.d_placement = placement
+
+    def __str__(self):
+        return "{CompetitionDancePlacement: d_compId='%s', d_eventId='%s', d_competitorNumber='%s', d_placement='%s'}" % (self.d_compId, self.d_eventId, self.d_competitorNumber, self.d_placement)
+
 
 
 class CompetitionEventResult(object):
@@ -133,6 +161,10 @@ class CompetitionEventResult(object):
         self.d_placement = placement
         self.d_callback = callback
 
+    def __str__(self):
+        return "{CompetitionEventResult: d_compId='%s', d_eventId='%s', d_eventDance='%s', d_judgeId='%s', d_competitorNumber='%s', d_round='%s', d_placement='%s', d_callback='%s'}" % (self.d_compId, self.d_eventId, self.d_eventDance, self.d_judgeId, self.d_competitorNumber, self.d_round, self.d_placement, self.d_callback)
+
+
 
 class CompetitionEventJudge(object):
     """
@@ -146,5 +178,9 @@ class CompetitionEventJudge(object):
         self.d_compId = comp_id
         self.d_judgeId = judge_id
         self.d_judgeName = judge_name
+
+    def __str__(self):
+        return "{CompetitionEventJudge: d_compId='%s', d_judgeId='%s', d_judgeName='%s'}" % (self.d_compId, self.d_judgeId, self.d_judgeName)
+
 
 
