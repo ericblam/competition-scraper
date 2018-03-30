@@ -19,23 +19,21 @@ O2CM_MAIN_RESULTS_URL = "http://results.o2cm.com/"
 g_nextCompetitorId = 0
 g_competitors = {} # (firstName, lastName): competitorId
 
+############################## MAIN ##############################
+
 def main():
     args = initialize()
 
-    urlQueue = []
     compsOfInterest = args.comps
 
     comps = parseMainResultsPage(compsOfInterest)
 
-    try:
-        dba.insertCompetitionList(comps)
-    except IntegrityError as e:
-        logging.error(e);
-
     for comp in comps:
+        compData = dba.DbObjectContainer()
+        compData.addCompetition(comp)
         logging.info(">>>   %s   <<<", "%s, %s" % (comp.d_compName, comp.d_compDate))
         compPage = loadCompPage(comp.d_compId)
-        #readCompPage(comp.compId, compPage)
+        readCompPage(compPage, comp.d_compId, compData)
 
 
 ############################## SET UP ##############################
@@ -87,7 +85,7 @@ def initialize():
     args = parseArgs()
 
     # Open Log
-    logLevel = logging.DEBUG
+    logLevel = logging.WARNING
     if (args.verbose):
         logLevel = logging.INFO
     formatter = logging.Formatter("%(asctime)s %(levelname)-8s %(message)s",
@@ -126,7 +124,7 @@ def parseMainResultsPage(compsOfInterest=[]):
     Returns list of Competition objects of interest
 
     :param compsOfInterest: list of compIds to specifically scrape. Scrapes all if empty
-    :returns:
+    :returns: List of dbo.Competition objects
     """
 
     soup = loadPage(O2CM_MAIN_RESULTS_URL, forceReload=True)
@@ -142,11 +140,92 @@ def parseMainResultsPage(compsOfInterest=[]):
         if (len(compsOfInterest) == 0 or compId in compsOfInterest):
             m = re.match('([a-z]+)\d+.*', compId)
             compCode = m.group(1)
-            competitions.append(dbo.Competition(compId, compCode, compName, date + " " + year))
+            fullDate = date + " " + year
+            competitions.append(dbo.Competition(compId, compCode, compName, fullDate))
     return competitions
 
 def loadCompPage(compId):
+    """
+    Loads page for competition compId
+
+    :param compId: string compId
+    :returns: bs4 object of results page for compId
+    """
+
+    url = 'http://results.o2cm.com/event3.asp'
+    data = {
+        'selDiv': '',
+        'selAge': '',
+        'selSkl': '',
+        'selSty': '',
+        'selEnt': '',
+        'submit': 'OK',
+        'event': compId
+    }
+    return loadPage(url, data, post=True)
+
+def readCompPage(compPage, compId, compData):
+    """
+    Reads whole listing of results from competition page.
+
+    :param compId: string id for the competition
+    :param compPage: bs4 object of competition results page
+    :returns:
+    """
+
+    tables = compPage.find_all('table')
+    mainTable = tables[1]
+    rows = mainTable.find_all('tr')
+
+    # Find first link
+    rowNum = 0
+    while rowNum < len(rows):
+        if (rows[rowNum].find('a') != None):
+            break
+        rowNum += 1
+
+    lastHeatName = None
+    lastHeadId = None
+    lastHeatLink = None
+    # Keep finding appropriate links
+    # As before, read first event page, read all heats of event
+    while rowNum < len(rows):
+        rowText = rows[rowNum].get_text().strip()
+
+        # Blank row
+        if rowText == '----':
+            pass
+        # Row is a link. Read event and heats.
+        elif (rows[rowNum].find('a') != None):
+            lastHeatName, lastHeatId, lastHeatLink = parseHeatLink(rows[rowNum])
+            if ("combine" not in lastHeatName.lower()):
+                readHeatPages(compId, lastHeatId, lastHeatLink)
+        # Row is a couple
+        elif (lastHeatName is not None and "combine" not in lastHeatName.lower()):
+            pass
+            # TODO: replace this functionality
+            # parseCouple(rowText, compId, lastHeatId)
+
+        rowNum += 1
+
+def readHeatPages(compId, heatId, heatUrl):
     pass
+
+############################## UTILS ##############################
+def parseHeatLink(tag):
+    """
+    Gets info from heat link tag.
+    :param tag: Tag containing <a> tag with link to heat
+    :returns: tuple of (heatName, heatId, heatLink)
+    """
+
+    heatName = tag.get_text().lstrip().strip()
+    heatLink = tag.find('a')['href']
+    m = re.match('scoresheet\d.asp\?.+&heatid=(\w+)&.+', heatLink)
+    heatId = m.group(1)
+    heatLink = 'http://results.o2cm.com/' + heatLink
+    logging.info(heatName)
+    return (heatName, heatId, heatLink)
 
 ############################## MAIN ##############################
 
