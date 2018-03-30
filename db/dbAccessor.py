@@ -81,12 +81,13 @@ def insertCompetitionEvent(competitionEvent):
     """
 
     _db.query("INSERT INTO competition_event"
-              "(comp_id, event_id, event_level, category) "
+              "(comp_id, event_id, event_level, category, url) "
               "VALUES "
-              "('%s', '%s', '%s', '%s')" % (competitionEvent.__dict__['d_compId'],
-                                            competitionEvent.__dict__['d_eventId'],
-                                            competitionEvent.__dict__['d_eventLevel'],
-                                            competitionEvent.__dict__['d_category']))
+              "('%s', '%s', '%s', '%s', '%s')" % (competitionEvent.__dict__['d_compId'],
+                                                  competitionEvent.__dict__['d_eventId'],
+                                                  competitionEvent.__dict__['d_eventLevel'],
+                                                  competitionEvent.__dict__['d_category'],
+                                                  competitionEvent.__dict__['d_url']))
 
 def insertCompetitionEventList(competitionEventList):
     """
@@ -95,13 +96,14 @@ def insertCompetitionEventList(competitionEventList):
 
     values = []
     for competitionEvent in competitionEventList:
-        values.append("('%s', '%s', '%s', '%s')" % (competitionEvent.__dict__['d_compId'],
-                                                    competitionEvent.__dict__['d_eventId'],
-                                                    competitionEvent.__dict__['d_eventLevel'],
-                                                    competitionEvent.__dict__['d_category']))
+        values.append("('%s', '%s', '%s', '%s', '%s')" % (competitionEvent.__dict__['d_compId'],
+                                                          competitionEvent.__dict__['d_eventId'],
+                                                          competitionEvent.__dict__['d_eventLevel'],
+                                                          competitionEvent.__dict__['d_category'],
+                                                          competitionEvent.__dict__['d_url']))
 
     _db.query("INSERT INTO competition_event"
-              "(comp_id, event_id, event_level, category) "
+              "(comp_id, event_id, event_level, category, url) "
               "VALUES "
               "%s" % ",".join(values))
 
@@ -114,7 +116,7 @@ def selectFromCompetitionEvent():
     dbRes = _db.query("SELECT * FROM competition_event")
     res = []
     for row in dbRes.dictresult():
-        res.append(CompetitionEvent(row["comp_id"], row["event_id"], row["event_level"], row["category"]))
+        res.append(CompetitionEvent(row["comp_id"], row["event_id"], row["event_level"], row["category"], row["url"]))
     return res
 
 def insertCompetitionEventDance(competitionEventDance):
@@ -414,4 +416,68 @@ def selectFromCompetitionEventJudge():
     for row in dbRes.dictresult():
         res.append(CompetitionEventJudge(row["comp_id"], row["judge_id"], row["judge_name"]))
     return res
+
+class DbObjectContainer(object):
+    """
+    Container Class to contain all DbObject
+    """
+
+    def __init__(self):
+        self.d_competition = []
+        self.d_competition_event = []
+        self.d_competition_event_dance = []
+        self.d_competition_entry = []
+        self.d_competitor = []
+        self.d_competition_event_placement = []
+        self.d_competition_dance_placement = []
+        self.d_competition_event_result = []
+        self.d_competition_event_judge = []
+
+    def addCompetition(self, competition):
+        self.d_competition.append(competition)
+
+    def addCompetitionEvent(self, competitionEvent):
+        self.d_competition_event.append(competitionEvent)
+
+    def addCompetitionEventDance(self, competitionEventDance):
+        self.d_competition_event_dance.append(competitionEventDance)
+
+    def addCompetitionEntry(self, competitionEntry):
+        self.d_competition_entry.append(competitionEntry)
+
+    def addCompetitor(self, competitor):
+        self.d_competitor.append(competitor)
+
+    def addCompetitionEventPlacement(self, competitionEventPlacement):
+        self.d_competition_event_placement.append(competitionEventPlacement)
+
+    def addCompetitionDancePlacement(self, competitionDancePlacement):
+        self.d_competition_dance_placement.append(competitionDancePlacement)
+
+    def addCompetitionEventResult(self, competitionEventResult):
+        self.d_competition_event_result.append(competitionEventResult)
+
+    def addCompetitionEventJudge(self, competitionEventJudge):
+        self.d_competition_event_judge.append(competitionEventJudge)
+
+    def dumpToDb(self):
+        if len(self.d_competition) > 0:
+            insertCompetitionList(self.d_competition)
+        if len(self.d_competition_event) > 0:
+            insertCompetitionEventList(self.d_competition_event)
+        if len(self.d_competition_event_dance) > 0:
+            insertCompetitionEventDanceList(self.d_competition_event_dance)
+        if len(self.d_competition_entry) > 0:
+            insertCompetitionEntryList(self.d_competition_entry)
+        if len(self.d_competitor) > 0:
+            insertCompetitorList(self.d_competitor)
+        if len(self.d_competition_event_placement) > 0:
+            insertCompetitionEventPlacementList(self.d_competition_event_placement)
+        if len(self.d_competition_dance_placement) > 0:
+            insertCompetitionDancePlacementList(self.d_competition_dance_placement)
+        if len(self.d_competition_event_result) > 0:
+            insertCompetitionEventResultList(self.d_competition_event_result)
+        if len(self.d_competition_event_judge) > 0:
+            insertCompetitionEventJudgeList(self.d_competition_event_judge)
+
 

@@ -21,6 +21,7 @@ create table competition_event (
        , event_id           varchar(16)
        , event_level        varchar(255)
        , category           varchar(255)
+       , url                varchar(255)
        , primary key (comp_id, event_id)
 );
 

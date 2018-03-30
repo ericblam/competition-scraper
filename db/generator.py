@@ -30,6 +30,30 @@ def writeDbObject(dboFile, tableName, properties):
     dboFile.write("        return \"{%s: %s}\" %% (%s)\n" % (className, toStringFormat, formatTuple))
     dboFile.write("\n\n\n")
 
+def writeDbObjectWrapper(dbaFile, tables):
+    dbaFile.write('class DbObjectContainer(object):\n'
+                  '    """\n'
+                  '    Container Class to contain all DbObject\n'
+                  '    """\n\n')
+    dbaFile.write("    def __init__(self):\n")
+    for table in tables:
+        dbaFile.write("        self.d_%s = []\n" % table)
+    dbaFile.write("\n")
+
+    for table in tables:
+        className = dbNameToDelimited(table, "", True)
+        objectName = dbNameToDelimited(table, "", False)
+        dbaFile.write("    def add%s(self, %s):\n" % (className, objectName))
+        dbaFile.write("        self.d_%s.append(%s)\n" % (table, objectName))
+        dbaFile.write("\n")
+
+    dbaFile.write("    def dumpToDb(self):\n")
+    for table in tables:
+        className = dbNameToDelimited(table, "", True)
+        dbaFile.write("        if len(self.d_%s) > 0:\n" % table)
+        dbaFile.write("            insert%sList(self.d_%s)\n" % (className, table))
+    dbaFile.write("\n\n")
+
 def writeDbReset(dbaFile):
     dbaFile.write('def dbReset():\n')
     dbaFile.write('    """\n')
@@ -113,11 +137,13 @@ writeDbResetComp(dbAccessorFile)
 isTable = False
 tableName = ""
 properties=[]
+tables = []
 for line in schemaFile:
     if "create table" in line:
         m = re.match("create table (.*) \(", line)
         tableName = m.group(1)
         isTable = True
+        tables.append(tableName)
         continue
 
     if isTable and ("primary key" in line or ");" in line):
@@ -131,6 +157,8 @@ for line in schemaFile:
     if isTable:
         m = re.match("\s*,?\s*([^\s]+)", line)
         properties.append(m.group(1))
+
+writeDbObjectWrapper(dbAccessorFile, tables)
 
 dbAccessorFile.close()
 dbObjectFile.close()
