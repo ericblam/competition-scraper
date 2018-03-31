@@ -17,7 +17,8 @@ LOG_FILE_NAME = ".o2cmScraper.log"
 O2CM_MAIN_RESULTS_URL = "http://results.o2cm.com/"
 
 g_nextCompetitorId = 0
-g_competitors = {} # (firstName, lastName): competitorId
+g_competitorToNames = {} # unsplitString: (firstName, lastName)
+g_competitors = {}       # (firstName, lastName): competitorId
 
 ############################## MAIN ##############################
 
@@ -32,8 +33,8 @@ def main():
         compData = dba.DbObjectContainer()
         compData.addCompetition(comp)
         logging.info(">>>   %s   <<<", "%s, %s" % (comp.d_compName, comp.d_compDate))
-        compPage = loadCompPage(comp.d_compId)
-        readCompPage(compPage, comp.d_compId, compData)
+        readCompPage(comp.d_compId, compData)
+        compData.dumpToDb()
 
 
 ############################## SET UP ##############################
@@ -164,15 +165,16 @@ def loadCompPage(compId):
     }
     return loadPage(url, data, post=True)
 
-def readCompPage(compPage, compId, compData):
+def readCompPage(compId, compData):
     """
     Reads whole listing of results from competition page.
 
     :param compId: string id for the competition
-    :param compPage: bs4 object of competition results page
-    :returns:
+    :param compData: Aggregate to save data into
+    :effects: Adds appropriate data to compData
     """
 
+    compPage = loadCompPage(compId)
     tables = compPage.find_all('table')
     mainTable = tables[1]
     rows = mainTable.find_all('tr')
@@ -200,18 +202,93 @@ def readCompPage(compPage, compId, compData):
             lastHeatName, lastHeatId, lastHeatLink = parseHeatLink(rows[rowNum])
             if ("combine" not in lastHeatName.lower()):
                 readHeatPages(compId, lastHeatId, lastHeatLink)
+                # TODO: Add data to compData
         # Row is a couple
         elif (lastHeatName is not None and "combine" not in lastHeatName.lower()):
-            pass
-            # TODO: replace this functionality
-            # parseCouple(rowText, compId, lastHeatId)
+            parseCouple(rowText, compId, lastHeatId, compData)
 
         rowNum += 1
 
 def readHeatPages(compId, heatId, heatUrl):
     pass
 
+def parseCouple(rowText, compId, heatId, compData):
+    """
+    Parses 'rowText' for leader and follower information
+
+    :param rowText: Text from row containing leader and follwer information
+    :param compId: id of competition
+    :param lastHeatId: id of heat to which to add competitiors
+    :param compData: Aggregate to save data into
+    :effects: Add competitor and entry info into compData
+    """
+
+    m = re.match('\d+\) (\d{1,3}) (.+) & (.+) \- (.+)', rowText)
+    state = 'N/A'
+    if (m != None):
+        state = m.group(4).strip()
+    else:
+        m = re.match('\d+\) (\d{1,3}) (.+) & (.+)', rowText)
+    coupleNumber = m.group(1).strip()
+    leaderString = m.group(2).strip()
+    leader = competitorName(leaderString)
+    leaderId = getCompetitorIdAndSave(leader, compData)
+    followerString = m.group(3).strip()
+    follower = competitorName(followerString)
+    followerId = getCompetitorIdAndSave(follower, compData)
+
+    compData.addCompetitionEntry(dbo.CompetitionEntry(compId, heatId, coupleNumber, leaderId, followerId))
+
 ############################## UTILS ##############################
+def getCompetitorIdAndSave(nameTuple, compData):
+    """
+    Gets competitor id from database. If competitor not in database, adds it to compData
+
+    :param nameTuple: tuple (firstName, lastName)
+    :param compData: Aggregate to save competitor data to
+    """
+
+    global g_nextCompetitorId
+    global g_competitors
+
+    if nameTuple not in g_competitors:
+        g_competitors[nameTuple] = g_nextCompetitorId
+        compData.addCompetitor(dbo.Competitor(g_nextCompetitorId, nameTuple[0], nameTuple[1]))
+        g_nextCompetitorId += 1
+    return g_competitors[nameTuple]
+
+def competitorName(name):
+    """
+    Parses name into first and last name, checking against o2cm if ambiguous
+
+    :param name: string containing full name
+    :returns: tuple (firstName, lastName)
+    """
+
+    global g_competitorToNames
+
+    tokens = name.split()
+    if (len(tokens) < 2):
+        return (name, '')
+    elif (len(tokens) == 2):
+        return (tokens[0], tokens[1])
+    else:
+        if (name in g_competitorToNames):
+            return g_competitorToNames[name]
+        found = False
+        for i in range(1, len(tokens)):
+            firstName = ' '.join(tokens[0:i])
+            lastName = ' '.join(tokens[i:len(tokens)])
+            soup = loadPage('http://results.o2cm.com/individual.asp', {'szFirst': firstName, 'szLast': lastName}, True)
+            if (soup.find('b') != None and 'no results' not in soup.find('b').get_text().lower()):
+                if (found):
+                    logging.warning("multiple people named %s", name)
+                found = True
+        if (found):
+            g_competitorToNames[name] = (firstName, lastName)
+            return (firstName, lastName)
+        return (name, '')
+
 def parseHeatLink(tag):
     """
     Gets info from heat link tag.
