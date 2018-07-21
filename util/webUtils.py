@@ -48,3 +48,11 @@ def loadPage(url, data={}, post=False, forceReload=False):
         print("Failed to fetch %s with request: %s" % (url, request))
         return None
     # return BeautifulSoup(u, "html.parser")
+
+def getHostname(url):
+    if not url.startswith("http://") or not url.startswith("https://"):
+        url = "http://" + url
+    fullhost = urllib.parse.urlparse(url).hostname
+    if fullhost.count(".") >= 1:
+        return ".".join(fullhost.split(".")[-2:-1])
+    return fullhost
