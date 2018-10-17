@@ -209,7 +209,60 @@ def readCompPage(compId, compData):
 
         rowNum += 1
 
+def loadHeatPage(heatUrl):
+    """
+    Loads page for heat with heatUrl
+
+    :param heatUrl: url from which to fetch
+    """
+    return loadPage(heatUrl)
+
+def getHeatPage(compId, heatId, roundNum, url):
+    """
+    Gets all heat pages for a given event
+
+    :param compId: string competition id
+    :param heatId: string event id
+    :param roundNum: int round number for heat
+    :param url: string url for heat
+    :returns: bs4 object representing comp event heat
+    """
+
+    return loadPage(url, {'event': compId, 'heatId': heatId, 'selCount': roundNum}, True)
+
+def getAllHeatPagesForEvent(page, compId, heatId, url):
+    heatUrlSimple = url.split("?")[0]
+    selCount = page.find('select', id='selCount')
+    numRounds = 0
+    if selCount is not None:
+        numRounds = len(selCount.find_all('option')) - 1
+        for r in range(numRounds - 1, 0, -1):
+            yield r, getHeatPage(compId, heatId, r, heatUrlSimple)
+    yield 0, page
+
 def readHeatPages(compId, heatId, heatUrl):
+    """
+    Gets all pages for event and parses through each
+
+    :param compId: string id for the competition
+    :param heatId: string id for the event
+    :param heatUrl: string url for the event pages
+    """
+
+    heatPage = loadHeatPage(heatUrl)
+    for heatNum, page in getAllHeatPagesForEvent(heatPage, compId, heatId, heatUrl):
+        readHeatPage(compId, heatId, heatNum, page)
+
+def readHeatPage(compId, heatId, heatNum, page):
+    """
+    Read information from heat page
+
+    :param compId: string comp id
+    :param heatId: string event id
+    :param heatNum: int representing the heat (0 is final, 1 is semi, ...)
+    :param page: bs4 object of event heat
+    """
+
     pass
 
 def parseCouple(rowText, compId, heatId, compData):
