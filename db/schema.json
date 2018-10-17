@@ -12,7 +12,7 @@
     {
 	"name": "competition_event",
 	"columns": [
-	    { "name": "event_id", "type": "int" }
+	    { "name": "event_id", "type": "varchar(16)" }
 	    , { "name": "comp_id", "type": "varchar(8)" }
 	    , { "name": "event_code", "type": "varchar(8)" }
 	    , { "name": "event_level", "type": "varchar(255)" }
@@ -26,7 +26,7 @@
 	"name": "competition_event_dance",
 	"columns": [
 	    { "name": "comp_id", "type": "varchar(8)" }
-	    , { "name": "event_id", "type": "int" }
+	    , { "name": "event_id", "type": "varchar(16)" }
 	    , { "name": "dance", "type": "varchar(255)" }
 	],
 	"primaryKeys": [],
@@ -36,7 +36,7 @@
 	"name": "competition_entry",
 	"columns": [
 	    { "name": "comp_id", "type": "varchar(8)" }
-	    , { "name": "event_id", "type": "int" }
+	    , { "name": "event_id", "type": "varchar(16)" }
 	    , { "name": "competitor_number", "type": "int" }
 	    , { "name": "leader_id", "type": "int" }
 	    , { "name": "follower_id", "type": "int" }
@@ -81,7 +81,7 @@
 	"name": "competition_event_result",
 	"columns": [
 	    { "name": "comp_id", "type": "varchar(8)" }
-	    , { "name": "event_id", "type": "int" }
+	    , { "name": "event_id", "type": "varchar(16)" }
 	    , { "name": "event_dance", "type": "varchar(255)" }
 	    , { "name": "judge_id", "type": "int" }
 	    , { "name": "competitor_number", "type": "int" }
@@ -96,7 +96,7 @@
 	"name": "competition_event_judge",
 	"columns": [
 	    { "name": "comp_id", "type": "varchar(8)" }
-	    , { "name": "event_id", "type": "int" }
+	    , { "name": "event_id", "type": "varchar(16)" }
 	    , { "name": "judge_id", "type": "int" }
 	    , { "name": "judge_name", "type": "varchar(255)" }
 	],

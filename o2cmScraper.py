@@ -142,7 +142,7 @@ def parseMainResultsPage(compsOfInterest=[]):
             m = re.match('([a-z]+)\d+.*', compId)
             compCode = m.group(1)
             fullDate = date + " " + year
-            competitions.append(dbo.Competition(compId, compCode, compName, fullDate))
+            competitions.append(dbo.Competition(compId, compName, fullDate))
     return competitions
 
 def loadCompPage(compId):

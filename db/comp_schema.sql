@@ -16,7 +16,7 @@ create table competition (
 );
 
 create table competition_event (
-        event_id             int
+        event_id             varchar(16)
       , comp_id              varchar(8)
       , event_code           varchar(8)
       , event_level          varchar(255)
@@ -27,13 +27,13 @@ create table competition_event (
 
 create table competition_event_dance (
         comp_id              varchar(8)
-      , event_id             int
+      , event_id             varchar(16)
       , dance                varchar(255)
 );
 
 create table competition_entry (
         comp_id              varchar(8)
-      , event_id             int
+      , event_id             varchar(16)
       , competitor_number    int
       , leader_id            int
       , follower_id          int
@@ -62,7 +62,7 @@ create table competition_dance_placement (
 
 create table competition_event_result (
         comp_id              varchar(8)
-      , event_id             int
+      , event_id             varchar(16)
       , event_dance          varchar(255)
       , judge_id             int
       , competitor_number    int
@@ -73,7 +73,7 @@ create table competition_event_result (
 
 create table competition_event_judge (
         comp_id              varchar(8)
-      , event_id             int
+      , event_id             varchar(16)
       , judge_id             int
       , judge_name           varchar(255)
 );
