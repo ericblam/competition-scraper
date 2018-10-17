@@ -1,0 +1,107 @@
+[
+    {
+	"name": "competition",
+	"columns": [
+	    { "name": "comp_id", "type": "int" }
+	    , { "name": "comp_code", "type": "varchar(8)" }
+	    , { "name": "comp_prefix", "type": "varchar(8)" }
+	    , { "name": "comp_name", "type": "varchar(255)" }
+	    , { "name": "comp_date", "type": "date" }
+	],
+	"primaryKeys": ["comp_id"],
+	"foreignKeys": []
+    },
+    {
+	"name": "competition_event",
+	"columns": [
+	    { "name": "event_id", "type": "int" }
+	    , { "name": "comp_id", "type": "int" }
+	    , { "name": "event_code", "type": "varchar(8)" }
+	    , { "name": "event_level", "type": "varchar(255)" }
+	    , { "name": "category", "type": "varchar(255)" }
+	    , { "name": "url", "type": "varchar(2084)" }
+	],
+	"primaryKeys": ["event_id"],
+	"foreignKeys": []
+    },
+    {
+	"name": "competition_event_dance",
+	"columns": [
+	    { "name": "comp_id", "type": "int" }
+	    , { "name": "event_id", "type": "int" }
+	    , { "name": "dance", "type": "varchar(255)" }
+	],
+	"primaryKeys": [],
+	"foreignKeys": []
+    },
+    {
+	"name": "competition_entry",
+	"columns": [
+	    { "name": "comp_id", "type": "int" }
+	    , { "name": "event_id", "type": "int" }
+	    , { "name": "competitor_number", "type": "int" }
+	    , { "name": "leader_id", "type": "int" }
+	    , { "name": "follower_id", "type": "int" }
+	],
+	"primaryKeys": [],
+	"foreignKeys": []
+    },
+    {
+	"name": "competitor",
+	"columns": [
+	    { "name": "competitor_id", "type": "int" }
+	    , { "name": "first_name", "type": "varchar(255)" }
+	    , { "name": "last_name", "type": "varchar(255)" }
+	],
+	"primaryKeys": [],
+	"foreignKeys": []
+    },
+    {
+	"name": "competition_event_placement",
+	"columns": [
+	    { "name": "comp_id", "type": "varchar(8)" }
+	    , { "name": "event_id", "type": "varchar(16)" }
+	    , { "name": "competitor_number", "type": "int" }
+	    , { "name": "placement", "type": "int" }
+	],
+	"primaryKeys": [],
+	"foreignKeys": []
+    },
+    {
+	"name": "competition_dance_placement",
+	"columns": [
+	    { "name": "comp_id", "type": "varchar(8)" }
+	    , { "name": "event_id", "type": "varchar(16)" }
+	    , { "name": "event_dance", "type": "varchar(255)" }
+	    , { "name": "competitor_number", "type": "int" }
+	    , { "name": "placement", "type": "int" }
+	],
+	"primaryKeys": [],
+	"foreignKeys": []
+    },
+    {
+	"name": "competition_event_result",
+	"columns": [
+	    { "name": "comp_id", "type": "int" }
+	    , { "name": "event_id", "type": "int" }
+	    , { "name": "event_dance", "type": "varchar(255)" }
+	    , { "name": "judge_id", "type": "int" }
+	    , { "name": "competitor_number", "type": "int" }
+	    , { "name": "round", "type": "int" }
+	    , { "name": "placement", "type": "int" }
+	    , { "name": "callback", "type": "boolean" }
+	],
+	"primaryKeys": [],
+	"foreignKeys": []
+    },
+    {
+	"name": "competition_event_judge",
+	"columns": [
+	    { "name": "comp_id", "type": "int" }
+	    , { "name": "judge_id", "type": "int" }
+	    , { "name": "judge_name", "type": "varchar(255)" }
+	],
+	"primaryKeys": [],
+	"foreignKeys": []
+    }
+]

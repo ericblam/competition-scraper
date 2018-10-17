@@ -1,7 +1,21 @@
-import re
-
+import argparse
+import json
 import os
+
 _dir = os.path.dirname(__file__) + "/"
+
+TABLE_NAME = 'name'
+TABLE_COLUMNS = 'columns'
+TABLE_PK = 'primaryKeys'
+TABLE_FK = 'foreignKeys'
+TABLE_COL_NAME = 'name'
+TABLE_COL_TYPE = 'type'
+
+def fileWrite(f, s):
+    if f is not None:
+        f.write(s)
+    else:
+        print(s)
 
 def dbNameToDelimited(name, delimiter="", caps=False):
     tokens = name.split("_")
@@ -9,157 +23,216 @@ def dbNameToDelimited(name, delimiter="", caps=False):
         return delimiter.join(x.title() for x in tokens)
     return tokens[0] + delimiter.join(x.title() for x in tokens[1:])
 
-def writeDbObject(dboFile, tableName, properties):
-    className = dbNameToDelimited(tableName, "", True)
-    titleName = dbNameToDelimited(tableName, " ", True)
+def writeDboHeader(dbObjectFile):
+    fileWrite(dbObjectFile, '""" File automatically generated with generator.py """\n\n')
 
-    dboFile.write('class %s(object):\n'
-                  '    """\n'
-                  '    %s wrapper class\n'
-                  '    """\n'
-                  '\n'
-                  '    def __init__(self,\n' % (className, titleName))
+def writeDbaHeader(dbAccessorFile):
+    s = ""
+    s += '""" File automatically generated with generator.py """\n\n'
+    s += 'from db.dbObjects import *\n\n'
+    s += 'from pg import DB, IntegrityError\n\n'
+    s += 'import os\n\n_dir = os.path.dirname(__file__) + "/"\n\n'
+    s += "_db = DB(dbname = 'ballroom_competitions',\n"
+    s += "         host   = 'localhost',\n"
+    s += "         port   =  5432,\n"
+    s += "         user   = 'postgres',\n"
+    s += "         passwd = 'postgres')\n\n"
+    fileWrite(dbAccessorFile, s)
 
-    dboFile.write(",\n".join('                 ' + x for x in properties))
-    dboFile.write('):\n')
-    dboFile.write("\n".join('        self.d_%s = %s' % (dbNameToDelimited(x), x) for x in properties))
-    dboFile.write("\n\n")
-    dboFile.write("    def __str__(self):\n")
-    toStringFormat = ", ".join("d_%s='%%s'" % dbNameToDelimited(x) for x in properties)
-    formatTuple =    ", ".join("self.d_%s" % dbNameToDelimited(x) for x in properties)
-    dboFile.write("        return \"{%s: %s}\" %% (%s)\n" % (className, toStringFormat, formatTuple))
-    dboFile.write("\n\n\n")
+def writeDropsToSchema(schemaFile, table):
+    s = "drop table %s;\n" % table[TABLE_NAME]
+    fileWrite(schemaFile, s)
 
-def writeDbObjectWrapper(dbaFile, tables):
-    dbaFile.write('class DbObjectContainer(object):\n'
-                  '    """\n'
-                  '    Container Class to contain all DbObject\n'
-                  '    """\n\n')
-    dbaFile.write("    def __init__(self):\n")
+    return s
+
+def writeTableToSchema(schemafile, table):
+    s = "\n"
+    s += "create table %s (\n" % table[TABLE_NAME]
+    tab = "        "
+    for column in table[TABLE_COLUMNS]:
+        s += "%s%-20s %s\n" % (tab, column[TABLE_COL_NAME], column[TABLE_COL_TYPE])
+        tab = "      , "
+    if len(table[TABLE_PK]) > 0:
+        s += "%sprimary key (%s)\n" % (tab, ", ".join(table[TABLE_PK]))
+    s += ");\n"
+
+    fileWrite(schemafile, s)
+
+    return s
+
+def writeDbReset(dbAccessorFile, sql):
+    s = ""
+    s += 'def dbReset():\n'
+    s += '    """\n'
+    s += '    Resets and reconfigures database\n'
+    s += '    """\n\n'
+    s += '    _db.query("""\n%s\n    """)\n\n' % sql
+
+    dbAccessorFile.write(s)
+
+    return s
+
+def writeDbResetComp(dbAccessorFile, tables):
+    tab = "        "
+    sql = ""
+    numCompTables = 0
     for table in tables:
-        dbaFile.write("        self.d_%s = []\n" % table)
-    dbaFile.write("\n")
+        for col in table[TABLE_COLUMNS]:
+            if col[TABLE_COL_NAME] == 'comp_id':
+                sql += tab + "delete from %s where comp_id = '%%s';\n" % table[TABLE_NAME]
+                numCompTables += 1
+                break
+    s = ""
+    s += 'def dbClearComp(compId):\n'
+    s += '    """\n'
+    s += '    Removes data for comp compId\n'
+    s += '    """\n\n'
+    s += '    _db.query("""\n%s    """ %% (%s))\n\n' % (sql, ",".join(['compId'] * numCompTables))
 
-    for table in tables:
-        className = dbNameToDelimited(table, "", True)
-        objectName = dbNameToDelimited(table, "", False)
-        dbaFile.write("    def add%s(self, %s):\n" % (className, objectName))
-        dbaFile.write("        self.d_%s.append(%s)\n" % (table, objectName))
-        dbaFile.write("\n")
+    dbAccessorFile.write(s)
 
-    dbaFile.write("    def dumpToDb(self):\n")
-    for table in tables:
-        className = dbNameToDelimited(table, "", True)
-        dbaFile.write("        if len(self.d_%s) > 0:\n" % table)
-        dbaFile.write("            insert%sList(self.d_%s)\n" % (className, table))
-    dbaFile.write("\n\n")
+    return s
 
-def writeDbReset(dbaFile):
-    dbaFile.write('def dbReset():\n')
-    dbaFile.write('    """\n')
-    dbaFile.write('    Resets and reconfigures database\n')
-    dbaFile.write('    """\n\n')
-    dbaFile.write('    with open(_dir + "schema_setup.sql") as sqlClearing:\n')
-    dbaFile.write('        _db.query(sqlClearing.read())\n\n')
+def writeDbObject(f, table):
+    className = dbNameToDelimited(table[TABLE_NAME], "", True)
+    titleName = dbNameToDelimited(table[TABLE_NAME], " ", True)
 
-def writeDbResetComp(dbaFile):
-    dbaFile.write('def dbClearComp(compId):\n')
-    dbaFile.write('    """\n')
-    dbaFile.write('    Removes data for comp compId\n')
-    dbaFile.write('    """\n\n')
-    dbaFile.write('    with open(_dir + "reset_comp_data.sql") as queryFile:\n')
-    dbaFile.write('        query = ""\n')
-    dbaFile.write('        for line in queryFile:\n')
-    dbaFile.write('            query += line % compId\n')
-    dbaFile.write('        _db.query(query)\n\n')
+    columns = table[TABLE_COLUMNS]
+    columnNames = [col[TABLE_COL_NAME] for col in columns]
 
-def writeDbAccessor(dbaFile, tableName, properties):
+    s = ""
+    s += "class %s(object):\n" % className
+    s += '    """\n'
+    s += '    %s wrapper class\n' % titleName
+    s += '    """\n\n'
+    s += '    def __init__(self,\n'
+    s += ',\n'.join('                 ' + colName for colName in columnNames)
+    s += '):\n'
+    s += ',\n'.join('        self.d_%s = %s' % (dbNameToDelimited(colName), colName) for colName in columnNames)
+    s += '\n\n'
+    s += '    def __str__(self):\n'
+
+    toStringFormat = ", ".join("d_%s='%%s'" % dbNameToDelimited(colName) for colName in columnNames)
+    formatTuple =    ", ".join("self.d_%s" % dbNameToDelimited(colName) for colName in columnNames)
+
+    s += '        return \"{%s: %s}\" %% (%s)\n' % (className, toStringFormat, formatTuple)
+    s += '\n\n\n'
+
+    f.write(s)
+
+    return s
+
+def writeDbAccessor(f, table):
+    tableName = table[TABLE_NAME]
     objectName = dbNameToDelimited(tableName, "", False)
     className = dbNameToDelimited(tableName, "", True)
     titleName = dbNameToDelimited(tableName, " ", True)
-    dbaFile.write('def insert%s(%s):\n' % (className, objectName))
-    dbaFile.write('    """\n')
-    dbaFile.write('    Function to insert single %s object into database\n' % className)
-    dbaFile.write('    """\n\n')
-    dbaFile.write('    _db.query("INSERT INTO %s"\n' % tableName)
-    dbaFile.write('              "(%s) "\n' % ', '.join(properties))
-    dbaFile.write('              "VALUES "\n')
-    formatTuple = ', '.join("'%s'" for x in properties)
+    columns = table[TABLE_COLUMNS]
+    columnNames = [col[TABLE_COL_NAME] for col in columns]
+
+    s = ""
+
+    s += 'def insert%s(%s):\n' % (className, objectName)
+    s += '    """\n'
+    s += '    Function to insert single %s object into database\n' % className
+    s += '    """\n\n'
+    s += '    _db.query("INSERT INTO %s"\n' % tableName
+    s += '              "(%s) "\n' % ', '.join(columnNames)
+    s += '              "VALUES "\n'
+    formatTuple = ', '.join("'%s'" for col in columnNames)
     spaceString = ',\n' + ' ' * (14 + len(formatTuple) + 8)
-    objectTuple = spaceString.join("%s.__dict__['%s']" % (objectName, 'd_' + dbNameToDelimited(x, "", False)) for x in properties)
-    dbaFile.write('              "(%s)" %% (%s))\n\n' % (formatTuple, objectTuple))
+    objectTuple = spaceString.join("%s.__dict__['%s']" % (objectName, 'd_' + dbNameToDelimited(col, "", False)) for col in columnNames)
 
-    dbaFile.write('def insert%sList(%sList):\n' % (className, objectName))
-    dbaFile.write('    """\n')
-    dbaFile.write('    Function to insert list of %s objects into database\n' % className)
-    dbaFile.write('    """\n\n')
-    dbaFile.write('    values = []\n')
-    dbaFile.write('    for %s in %sList:\n' % (objectName, objectName))
-    dbaFile.write('        values.append(')
-    formatTuple = ', '.join("'%s'" for x in properties)
+    s += '              "(%s)" %% (%s))\n\n' % (formatTuple, objectTuple)
+
+    s += 'def insert%sList(%sList):\n' % (className, objectName)
+    s += '    """\n'
+    s += '    Function to insert list of %s objects into database\n' % className
+    s += '    """\n\n'
+    s += '    values = []\n'
+    s += '    for %s in %sList:\n' % (objectName, objectName)
+    s += '        values.append('
+    formatTuple = ', '.join("'%s'" for col in columnNames)
     spaceString = ',\n' + ' ' * (22 + len(formatTuple) + 8)
-    objectTuple = spaceString.join("%s.__dict__['%s']" % (objectName, 'd_' + dbNameToDelimited(x, "", False)) for x in properties)
-    dbaFile.write('"(%s)" %% (%s))\n\n' % (formatTuple, objectTuple))
-    dbaFile.write('    _db.query("INSERT INTO %s"\n' % tableName)
-    dbaFile.write('              "(%s) "\n' % ', '.join(properties))
-    dbaFile.write('              "VALUES "\n')
-    dbaFile.write('              "%s" % ",".join(values))\n\n')
+    objectTuple = spaceString.join("%s.__dict__['%s']" % (objectName, 'd_' + dbNameToDelimited(col, "", False)) for col in columnNames)
+    s += '"(%s)" %% (%s))\n\n' % (formatTuple, objectTuple)
+    s += '    _db.query("INSERT INTO %s"\n' % tableName
+    s += '              "(%s) "\n' % ', '.join(columnNames)
+    s += '              "VALUES "\n'
+    s += '              "%s" % ",".join(values))\n\n'
 
-    dbaFile.write('def selectFrom%s():\n' % className)
-    dbaFile.write('    """\n')
-    dbaFile.write('    Does select * from %s\n' % tableName)
-    dbaFile.write('    Exercise caution - this retrieves all rows of %s\n' % tableName)
-    dbaFile.write('    """\n\n')
-    dbaFile.write('    dbRes = _db.query("SELECT * FROM %s")\n' % tableName)
-    dbaFile.write('    res = []\n')
-    dbaFile.write('    for row in dbRes.dictresult():\n')
-    propertyList = ", ".join('row["%s"]' % p for p in properties)
-    dbaFile.write('        res.append(%s(%s))\n' % (className, propertyList))
-    dbaFile.write('    return res\n\n')
+    s += 'def selectFrom%s():\n' % className
+    s += '    """\n'
+    s += '    Does select * from %s\n' % tableName
+    s += '    Exercise caution - this retrieves all rows of %s\n' % tableName
+    s += '    """\n\n'
+    s += '    dbRes = _db.query("SELECT * FROM %s")\n' % tableName
+    s += '    res = []\n'
+    s += '    for row in dbRes.dictresult():\n'
+    columnList = ", ".join('row["%s"]' % p for p in columnNames)
+    s += '        res.append(%s(%s))\n' % (className, columnList)
+    s += '    return res\n\n'
 
-schemaFile = open(_dir + "schema_setup.sql", "r")
-dbObjectFile = open(_dir + "dbObjects.py", "w")
-dbAccessorFile = open(_dir + "dbAccessor.py", "w")
+    f.write(s)
+    return s
 
-dbObjectFile.write('""" File automatically generated with generator.py """\n\n')
-dbAccessorFile.write('""" File automatically generated with generator.py """\n\n')
-dbAccessorFile.write('from db.dbObjects import *\n\n')
-dbAccessorFile.write('from pg import DB, IntegrityError\n\n')
-dbAccessorFile.write('import os\n\n_dir = os.path.dirname(__file__) + "/"\n\n')
-dbAccessorFile.write("_db = DB(dbname = 'ballroom_competitions',\n")
-dbAccessorFile.write("         host   = 'localhost',\n")
-dbAccessorFile.write("         port   =  5432,\n")
-dbAccessorFile.write("         user   = 'postgres',\n")
-dbAccessorFile.write("         passwd = 'postgres')\n\n")
-writeDbReset(dbAccessorFile)
-writeDbResetComp(dbAccessorFile)
+def writeDbObjectWrapper(f, tables):
+    s = ""
+    s += 'class DbObjectContainer(object):\n'
+    s += '    """\n'
+    s += '    Container Class to contain all DbObject\n'
+    s += '    """\n\n'
+    s += "    def __init__(self):\n"
+    for table in tables:
+        s += "        self.d_%s = []\n" % table[TABLE_NAME]
+    s += "\n"
 
-isTable = False
-tableName = ""
-properties=[]
-tables = []
-for line in schemaFile:
-    if "create table" in line:
-        m = re.match("create table (.*) \(", line)
-        tableName = m.group(1)
-        isTable = True
-        tables.append(tableName)
-        continue
+    for table in tables:
+        tableName = table[TABLE_NAME]
+        className = dbNameToDelimited(tableName, "", True)
+        objectName = dbNameToDelimited(tableName, "", False)
+        s += "    def add%s(self, %s):\n" % (className, objectName)
+        s += "        self.d_%s.append(%s)\n" % (tableName, objectName)
+        s += "\n"
 
-    if isTable and ("primary key" in line or ");" in line):
-        writeDbObject(dbObjectFile, tableName, properties)
-        writeDbAccessor(dbAccessorFile, tableName, properties)
+    s += "    def dumpToDb(self):\n"
+    for table in tables:
+        tableName = table[TABLE_NAME]
+        className = dbNameToDelimited(tableName, "", True)
+        s += "        if len(self.d_%s) > 0:\n" % tableName
+        s += "            insert%sList(self.d_%s)\n" % (className, tableName)
+    s += "\n\n"
 
-        isTable = False
-        properties = []
-        continue
+    f.write(s)
+    return s
 
-    if isTable:
-        m = re.match("\s*,?\s*([^\s]+)", line)
-        properties.append(m.group(1))
 
-writeDbObjectWrapper(dbAccessorFile, tables)
 
-dbAccessorFile.close()
-dbObjectFile.close()
-schemaFile.close()
+def main():
+    with open(_dir + "schema.json", "r") as jsonSchemaFile, \
+         open(_dir + "comp_schema.sql", "w") as schemaFile, \
+         open(_dir + "dbObjects.py", "w") as dbObjectFile, \
+         open(_dir + "dbAccessor.py", "w") as dbAccessorFile:
+
+        writeDboHeader(dbObjectFile)
+        writeDbaHeader(dbAccessorFile)
+
+        schema = json.loads(jsonSchemaFile.read())
+        schemaSql = ""
+        for table in schema:
+            schemaSql += writeDropsToSchema(schemaFile, table)
+
+        for table in schema:
+            schemaSql += writeTableToSchema(schemaFile, table)
+
+        writeDbReset(dbAccessorFile, schemaSql)
+        writeDbResetComp(dbAccessorFile, schema)
+
+        for table in schema:
+            writeDbObject(dbObjectFile, table)
+            writeDbAccessor(dbAccessorFile, table)
+
+        writeDbObjectWrapper(dbAccessorFile, schema)
+
+if __name__ == "__main__":
+    main()
