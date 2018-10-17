@@ -14,7 +14,7 @@ db = DB(dbname = 'ballroom_competitions',
         passwd = 'postgres')
 
 def resetDb():
-    with open('db/schema_setup.sql', "r") as schemaFile:
+    with open('db/comp_schema.sql', "r") as schemaFile:
         db.query(schemaFile.read())
 
 
@@ -23,9 +23,8 @@ class TestInserts(unittest.TestCase):
     def test_competition_insert(self):
         resetDb()
 
-        val = ('rpi17', 'rpi', 'RPI Dancesport Competition', datetime.date(2017, 4, 2))
+        val = ('rpi17', 'RPI Dancesport Competition', datetime.date(2017, 4, 2))
         queryVal = val[0:len(val)-1] + (str(val[len(val)-1]),)
-
         x = dbObjects.Competition(*queryVal)
         dbAccessor.insertCompetition(x)
 
@@ -38,8 +37,8 @@ class TestInserts(unittest.TestCase):
     def test_competition_list_insert(self):
         resetDb()
 
-        vals = [('rpi16', 'rpi', 'RPI Dancesport Competition', datetime.date(2016, 4, 2)),
-                ('rpi17', 'rpi', 'RPI Dancesport Competition', datetime.date(2017, 3, 25))]
+        vals = [('rpi16', 'RPI Dancesport Competition', datetime.date(2016, 4, 2)),
+                ('rpi17', 'RPI Dancesport Competition', datetime.date(2017, 3, 25))]
         queryVals = [val[0:len(val)-1] + (str(val[len(val)-1]),) for val in vals]
 
         comps = []
@@ -57,8 +56,8 @@ class TestInserts(unittest.TestCase):
     def test_full_reset(self):
         resetDb()
 
-        vals = [('rpi16', 'rpi', 'RPI Dancesport Competition', datetime.date(2016, 4, 2)),
-                ('rpi17', 'rpi', 'RPI Dancesport Competition', datetime.date(2017, 3, 25))]
+        vals = [('rpi16', 'RPI Dancesport Competition', datetime.date(2016, 4, 2)),
+                ('rpi17', 'RPI Dancesport Competition', datetime.date(2017, 3, 25))]
         queryVals = [val[0:len(val)-1] + (str(val[len(val)-1]),) for val in vals]
 
         comps = []
@@ -76,8 +75,8 @@ class TestInserts(unittest.TestCase):
     def test_single_reset(self):
         resetDb()
 
-        vals = [('rpi16', 'rpi', 'RPI Dancesport Competition', datetime.date(2016, 4, 2)),
-                ('rpi17', 'rpi', 'RPI Dancesport Competition', datetime.date(2017, 3, 25))]
+        vals = [('rpi16', 'RPI Dancesport Competition', datetime.date(2016, 4, 2)),
+                ('rpi17', 'RPI Dancesport Competition', datetime.date(2017, 3, 25))]
         queryVals = [val[0:len(val)-1] + (str(val[len(val)-1]),) for val in vals]
 
         comps = []
@@ -96,7 +95,7 @@ class TestInserts(unittest.TestCase):
     def test_select_single(self):
         resetDb()
 
-        vals = [('rpi16', 'rpi', 'RPI Dancesport Competition', datetime.date(2016, 4, 2))]
+        vals = [('rpi16', 'RPI Dancesport Competition', datetime.date(2016, 4, 2))]
         queryVals = [val[0:len(val)-1] + (str(val[len(val)-1]),) for val in vals]
 
         comps = []
@@ -114,8 +113,8 @@ class TestInserts(unittest.TestCase):
     def test_select_two(self):
         resetDb()
 
-        vals = [('rpi16', 'rpi', 'RPI Dancesport Competition', datetime.date(2016, 4, 2)),
-                ('rpi17', 'rpi', 'RPI Dancesport Competition', datetime.date(2017, 3, 25))]
+        vals = [('rpi16', 'RPI Dancesport Competition', datetime.date(2016, 4, 2)),
+                ('rpi17', 'RPI Dancesport Competition', datetime.date(2017, 3, 25))]
         queryVals = [val[0:len(val)-1] + (str(val[len(val)-1]),) for val in vals]
 
         comps = []

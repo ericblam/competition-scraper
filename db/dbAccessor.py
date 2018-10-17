@@ -31,9 +31,7 @@ drop table competition_event_result;
 drop table competition_event_judge;
 
 create table competition (
-        comp_id              int
-      , comp_code            varchar(8)
-      , comp_prefix          varchar(8)
+        comp_id              varchar(8)
       , comp_name            varchar(255)
       , comp_date            date
       , primary key (comp_id)
@@ -41,7 +39,7 @@ create table competition (
 
 create table competition_event (
         event_id             int
-      , comp_id              int
+      , comp_id              varchar(8)
       , event_code           varchar(8)
       , event_level          varchar(255)
       , category             varchar(255)
@@ -50,13 +48,13 @@ create table competition_event (
 );
 
 create table competition_event_dance (
-        comp_id              int
+        comp_id              varchar(8)
       , event_id             int
       , dance                varchar(255)
 );
 
 create table competition_entry (
-        comp_id              int
+        comp_id              varchar(8)
       , event_id             int
       , competitor_number    int
       , leader_id            int
@@ -85,7 +83,7 @@ create table competition_dance_placement (
 );
 
 create table competition_event_result (
-        comp_id              int
+        comp_id              varchar(8)
       , event_id             int
       , event_dance          varchar(255)
       , judge_id             int
@@ -96,7 +94,8 @@ create table competition_event_result (
 );
 
 create table competition_event_judge (
-        comp_id              int
+        comp_id              varchar(8)
+      , event_id             int
       , judge_id             int
       , judge_name           varchar(255)
 );
@@ -125,13 +124,11 @@ def insertCompetition(competition):
     """
 
     _db.query("INSERT INTO competition"
-              "(comp_id, comp_code, comp_prefix, comp_name, comp_date) "
+              "(comp_id, comp_name, comp_date) "
               "VALUES "
-              "('%s', '%s', '%s', '%s', '%s')" % (competition.__dict__['d_compId'],
-                                                  competition.__dict__['d_compCode'],
-                                                  competition.__dict__['d_compPrefix'],
-                                                  competition.__dict__['d_compName'],
-                                                  competition.__dict__['d_compDate']))
+              "('%s', '%s', '%s')" % (competition.__dict__['d_compId'],
+                                      competition.__dict__['d_compName'],
+                                      competition.__dict__['d_compDate']))
 
 def insertCompetitionList(competitionList):
     """
@@ -140,14 +137,12 @@ def insertCompetitionList(competitionList):
 
     values = []
     for competition in competitionList:
-        values.append("('%s', '%s', '%s', '%s', '%s')" % (competition.__dict__['d_compId'],
-                                                          competition.__dict__['d_compCode'],
-                                                          competition.__dict__['d_compPrefix'],
-                                                          competition.__dict__['d_compName'],
-                                                          competition.__dict__['d_compDate']))
+        values.append("('%s', '%s', '%s')" % (competition.__dict__['d_compId'],
+                                              competition.__dict__['d_compName'],
+                                              competition.__dict__['d_compDate']))
 
     _db.query("INSERT INTO competition"
-              "(comp_id, comp_code, comp_prefix, comp_name, comp_date) "
+              "(comp_id, comp_name, comp_date) "
               "VALUES "
               "%s" % ",".join(values))
 
@@ -160,7 +155,7 @@ def selectFromCompetition():
     dbRes = _db.query("SELECT * FROM competition")
     res = []
     for row in dbRes.dictresult():
-        res.append(Competition(row["comp_id"], row["comp_code"], row["comp_prefix"], row["comp_name"], row["comp_date"]))
+        res.append(Competition(row["comp_id"], row["comp_name"], row["comp_date"]))
     return res
 
 def insertCompetitionEvent(competitionEvent):
@@ -475,11 +470,12 @@ def insertCompetitionEventJudge(competitionEventJudge):
     """
 
     _db.query("INSERT INTO competition_event_judge"
-              "(comp_id, judge_id, judge_name) "
+              "(comp_id, event_id, judge_id, judge_name) "
               "VALUES "
-              "('%s', '%s', '%s')" % (competitionEventJudge.__dict__['d_compId'],
-                                      competitionEventJudge.__dict__['d_judgeId'],
-                                      competitionEventJudge.__dict__['d_judgeName']))
+              "('%s', '%s', '%s', '%s')" % (competitionEventJudge.__dict__['d_compId'],
+                                            competitionEventJudge.__dict__['d_eventId'],
+                                            competitionEventJudge.__dict__['d_judgeId'],
+                                            competitionEventJudge.__dict__['d_judgeName']))
 
 def insertCompetitionEventJudgeList(competitionEventJudgeList):
     """
@@ -488,12 +484,13 @@ def insertCompetitionEventJudgeList(competitionEventJudgeList):
 
     values = []
     for competitionEventJudge in competitionEventJudgeList:
-        values.append("('%s', '%s', '%s')" % (competitionEventJudge.__dict__['d_compId'],
-                                              competitionEventJudge.__dict__['d_judgeId'],
-                                              competitionEventJudge.__dict__['d_judgeName']))
+        values.append("('%s', '%s', '%s', '%s')" % (competitionEventJudge.__dict__['d_compId'],
+                                                    competitionEventJudge.__dict__['d_eventId'],
+                                                    competitionEventJudge.__dict__['d_judgeId'],
+                                                    competitionEventJudge.__dict__['d_judgeName']))
 
     _db.query("INSERT INTO competition_event_judge"
-              "(comp_id, judge_id, judge_name) "
+              "(comp_id, event_id, judge_id, judge_name) "
               "VALUES "
               "%s" % ",".join(values))
 
@@ -506,7 +503,7 @@ def selectFromCompetitionEventJudge():
     dbRes = _db.query("SELECT * FROM competition_event_judge")
     res = []
     for row in dbRes.dictresult():
-        res.append(CompetitionEventJudge(row["comp_id"], row["judge_id"], row["judge_name"]))
+        res.append(CompetitionEventJudge(row["comp_id"], row["event_id"], row["judge_id"], row["judge_name"]))
     return res
 
 class DbObjectContainer(object):

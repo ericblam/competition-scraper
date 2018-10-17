@@ -108,7 +108,7 @@ def writeDbObject(f, table):
     s += '    def __init__(self,\n'
     s += ',\n'.join('                 ' + colName for colName in columnNames)
     s += '):\n'
-    s += ',\n'.join('        self.d_%s = %s' % (dbNameToDelimited(colName), colName) for colName in columnNames)
+    s += '\n'.join('        self.d_%s = %s' % (dbNameToDelimited(colName), colName) for colName in columnNames)
     s += '\n\n'
     s += '    def __str__(self):\n'
 
