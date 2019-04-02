@@ -41,6 +41,7 @@ create table competition_event (
         event_id             varchar(16)
       , comp_id              varchar(8)
       , event_code           varchar(8)
+      , event_age            varchar(255)
       , event_level          varchar(255)
       , category             varchar(255)
       , url                  varchar(2084)
@@ -164,14 +165,15 @@ def insertCompetitionEvent(competitionEvent):
     """
 
     _db.query("INSERT INTO competition_event"
-              "(event_id, comp_id, event_code, event_level, category, url) "
+              "(event_id, comp_id, event_code, event_age, event_level, category, url) "
               "VALUES "
-              "('%s', '%s', '%s', '%s', '%s', '%s')" % (competitionEvent.__dict__['d_eventId'],
-                                                        competitionEvent.__dict__['d_compId'],
-                                                        competitionEvent.__dict__['d_eventCode'],
-                                                        competitionEvent.__dict__['d_eventLevel'],
-                                                        competitionEvent.__dict__['d_category'],
-                                                        competitionEvent.__dict__['d_url']))
+              "('%s', '%s', '%s', '%s', '%s', '%s', '%s')" % (competitionEvent.__dict__['d_eventId'],
+                                                              competitionEvent.__dict__['d_compId'],
+                                                              competitionEvent.__dict__['d_eventCode'],
+                                                              competitionEvent.__dict__['d_eventAge'],
+                                                              competitionEvent.__dict__['d_eventLevel'],
+                                                              competitionEvent.__dict__['d_category'],
+                                                              competitionEvent.__dict__['d_url']))
 
 def insertCompetitionEventList(competitionEventList):
     """
@@ -180,15 +182,16 @@ def insertCompetitionEventList(competitionEventList):
 
     values = []
     for competitionEvent in competitionEventList:
-        values.append("('%s', '%s', '%s', '%s', '%s', '%s')" % (competitionEvent.__dict__['d_eventId'],
-                                                                competitionEvent.__dict__['d_compId'],
-                                                                competitionEvent.__dict__['d_eventCode'],
-                                                                competitionEvent.__dict__['d_eventLevel'],
-                                                                competitionEvent.__dict__['d_category'],
-                                                                competitionEvent.__dict__['d_url']))
+        values.append("('%s', '%s', '%s', '%s', '%s', '%s', '%s')" % (competitionEvent.__dict__['d_eventId'],
+                                                                      competitionEvent.__dict__['d_compId'],
+                                                                      competitionEvent.__dict__['d_eventCode'],
+                                                                      competitionEvent.__dict__['d_eventAge'],
+                                                                      competitionEvent.__dict__['d_eventLevel'],
+                                                                      competitionEvent.__dict__['d_category'],
+                                                                      competitionEvent.__dict__['d_url']))
 
     _db.query("INSERT INTO competition_event"
-              "(event_id, comp_id, event_code, event_level, category, url) "
+              "(event_id, comp_id, event_code, event_age, event_level, category, url) "
               "VALUES "
               "%s" % ",".join(values))
 
@@ -201,7 +204,7 @@ def selectFromCompetitionEvent():
     dbRes = _db.query("SELECT * FROM competition_event")
     res = []
     for row in dbRes.dictresult():
-        res.append(CompetitionEvent(row["event_id"], row["comp_id"], row["event_code"], row["event_level"], row["category"], row["url"]))
+        res.append(CompetitionEvent(row["event_id"], row["comp_id"], row["event_code"], row["event_age"], row["event_level"], row["category"], row["url"]))
     return res
 
 def insertCompetitionEventDance(competitionEventDance):

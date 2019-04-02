@@ -27,18 +27,20 @@ class CompetitionEvent(object):
                  event_id,
                  comp_id,
                  event_code,
+                 event_age,
                  event_level,
                  category,
                  url):
         self.d_eventId = event_id
         self.d_compId = comp_id
         self.d_eventCode = event_code
+        self.d_eventAge = event_age
         self.d_eventLevel = event_level
         self.d_category = category
         self.d_url = url
 
     def __str__(self):
-        return "{CompetitionEvent: d_eventId='%s', d_compId='%s', d_eventCode='%s', d_eventLevel='%s', d_category='%s', d_url='%s'}" % (self.d_eventId, self.d_compId, self.d_eventCode, self.d_eventLevel, self.d_category, self.d_url)
+        return "{CompetitionEvent: d_eventId='%s', d_compId='%s', d_eventCode='%s', d_eventAge='%s', d_eventLevel='%s', d_category='%s', d_url='%s'}" % (self.d_eventId, self.d_compId, self.d_eventCode, self.d_eventAge, self.d_eventLevel, self.d_category, self.d_url)
 
 
 

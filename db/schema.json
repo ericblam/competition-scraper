@@ -15,6 +15,7 @@
 	    { "name": "event_id", "type": "varchar(16)" }
 	    , { "name": "comp_id", "type": "varchar(8)" }
 	    , { "name": "event_code", "type": "varchar(8)" }
+	    , { "name": "event_age", "type": "varchar(255)" }
 	    , { "name": "event_level", "type": "varchar(255)" }
 	    , { "name": "category", "type": "varchar(255)" }
 	    , { "name": "url", "type": "varchar(2084)" }

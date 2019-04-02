@@ -19,6 +19,7 @@ create table competition_event (
         event_id             varchar(16)
       , comp_id              varchar(8)
       , event_code           varchar(8)
+      , event_age            varchar(255)
       , event_level          varchar(255)
       , category             varchar(255)
       , url                  varchar(2084)
