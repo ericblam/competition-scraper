@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# Run with python3 -m unittest test.test_db
 
 import datetime
 import os
@@ -6,18 +7,18 @@ import unittest
 
 from pg import DB
 
-import db.dbObjects as dbObjects
-import db.dbAccessor as dbAccessor
+import db.dbObjects
+import db.dbAccessor
 
-db = DB(dbname = 'ballroom_competitions',
-        host   = 'localhost',
-        port   =  5432,
-        user   = 'postgres',
-        passwd = 'postgres')
+dbConn = DB(dbname = 'ballroom_competitions',
+            host   = 'localhost',
+            port   =  5432,
+            user   = 'postgres',
+            passwd = 'postgres')
 
 def resetDb():
     with open('db/comp_schema.sql', "r") as schemaFile:
-        db.query(schemaFile.read())
+        dbConn.query(schemaFile.read())
 
 
 class TestInserts(unittest.TestCase):
@@ -27,10 +28,10 @@ class TestInserts(unittest.TestCase):
 
         val = ('rpi17', 'RPI Dancesport Competition', datetime.date(2017, 4, 2))
         queryVal = val[0:len(val)-1] + (str(val[len(val)-1]),)
-        x = dbObjects.Competition(*queryVal)
-        dbAccessor.insertCompetition(x)
+        x = db.dbObjects.Competition(*queryVal)
+        db.dbAccessor.insertCompetition(x)
 
-        res = db.query('select * from competition').getresult()
+        res = dbConn.query('select * from competition').getresult()
         self.assertEqual(len(res), 1)
         self.assertEqual(val, res[0])
 
@@ -45,10 +46,10 @@ class TestInserts(unittest.TestCase):
 
         comps = []
         for v in vals:
-            comps.append(dbObjects.Competition(*v))
-        dbAccessor.insertCompetitionList(comps)
+            comps.append(db.dbObjects.Competition(*v))
+        db.dbAccessor.insertCompetitionList(comps)
 
-        res = db.query('select * from competition').getresult()
+        res = dbConn.query('select * from competition').getresult()
         self.assertEqual(len(res), len(vals))
         self.assertEqual(vals[0], res[0])
         self.assertEqual(vals[1], res[1])
@@ -64,12 +65,12 @@ class TestInserts(unittest.TestCase):
 
         comps = []
         for v in vals:
-            comps.append(dbObjects.Competition(*v))
-        dbAccessor.insertCompetitionList(comps)
+            comps.append(db.dbObjects.Competition(*v))
+        db.dbAccessor.insertCompetitionList(comps)
 
-        dbAccessor.dbReset()
+        db.dbAccessor.dbReset()
 
-        res = db.query('select * from competition').getresult()
+        res = dbConn.query('select * from competition').getresult()
         self.assertEqual(len(res), 0)
 
         resetDb()
@@ -83,12 +84,12 @@ class TestInserts(unittest.TestCase):
 
         comps = []
         for v in vals:
-            comps.append(dbObjects.Competition(*v))
-        dbAccessor.insertCompetitionList(comps)
+            comps.append(db.dbObjects.Competition(*v))
+        db.dbAccessor.insertCompetitionList(comps)
 
-        dbAccessor.dbClearComp("rpi17")
+        db.dbAccessor.dbClearComp("rpi17")
 
-        res = db.query('select * from competition').getresult()
+        res = dbConn.query('select * from competition').getresult()
         self.assertEqual(len(res), 1)
         self.assertEqual(vals[0], res[0])
 
@@ -102,12 +103,12 @@ class TestInserts(unittest.TestCase):
 
         comps = []
         for v in vals:
-            comps.append(dbObjects.Competition(*v))
-        dbAccessor.insertCompetitionList(comps)
+            comps.append(db.dbObjects.Competition(*v))
+        db.dbAccessor.insertCompetitionList(comps)
 
-        res = dbAccessor.selectFromCompetition()
+        res = db.dbAccessor.selectFromCompetition()
         self.assertEqual(len(res), 1)
-        self.assertTrue(isinstance(res[0], dbObjects.Competition))
+        self.assertTrue(isinstance(res[0], db.dbObjects.Competition))
         self.assertEqual(res[0].d_compId, "rpi16")
 
         resetDb()
@@ -121,13 +122,13 @@ class TestInserts(unittest.TestCase):
 
         comps = []
         for v in vals:
-            comps.append(dbObjects.Competition(*v))
-        dbAccessor.insertCompetitionList(comps)
+            comps.append(db.dbObjects.Competition(*v))
+        db.dbAccessor.insertCompetitionList(comps)
 
-        res = dbAccessor.selectFromCompetition()
+        res = db.dbAccessor.selectFromCompetition()
         self.assertEqual(len(res), 2)
-        self.assertTrue(isinstance(res[0], dbObjects.Competition))
-        self.assertTrue(isinstance(res[1], dbObjects.Competition))
+        self.assertTrue(isinstance(res[0], db.dbObjects.Competition))
+        self.assertTrue(isinstance(res[1], db.dbObjects.Competition))
         self.assertEqual(res[0].d_compId, "rpi16")
         self.assertEqual(res[1].d_compId, "rpi17")
 
