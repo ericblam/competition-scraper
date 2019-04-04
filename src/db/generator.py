@@ -2,6 +2,9 @@ import argparse
 import json
 import os
 
+OBJECTS_FILE_NAME = 'dbobjects'
+ACCESSOR_FILE_NAME = 'dbaccessor'
+
 _dir = os.path.dirname(__file__) + "/"
 
 TABLE_NAME = 'name'
@@ -29,7 +32,7 @@ def writeDboHeader(dbObjectFile):
 def writeDbaHeader(dbAccessorFile):
     s = ""
     s += '""" File automatically generated with generator.py """\n\n'
-    s += 'from db.dbObjects import *\n\n'
+    s += 'from db.' + OBJECTS_FILE_NAME +' import *\n\n'
     s += 'from pg import DB, IntegrityError\n\n'
     s += 'import os\n\n_dir = os.path.dirname(__file__) + "/"\n\n'
     s += "def createConn(config):\n"
@@ -63,11 +66,11 @@ def writeTableToSchema(schemafile, table):
 
 def writeDbReset(dbAccessorFile, sql):
     s = ""
-    s += 'def dbReset():\n'
+    s += 'def dbReset(conn):\n'
     s += '    """\n'
     s += '    Resets and reconfigures database\n'
     s += '    """\n\n'
-    s += '    _db.query("""\n%s\n    """)\n\n' % sql
+    s += '    conn.query("""\n%s\n    """)\n\n' % sql
 
     dbAccessorFile.write(s)
 
@@ -84,11 +87,11 @@ def writeDbResetComp(dbAccessorFile, tables):
                 numCompTables += 1
                 break
     s = ""
-    s += 'def dbClearComp(compId):\n'
+    s += 'def dbClearComp(conn, compId):\n'
     s += '    """\n'
     s += '    Removes data for comp compId\n'
     s += '    """\n\n'
-    s += '    _db.query("""\n%s    """ %% (%s))\n\n' % (sql, ",".join(['compId'] * numCompTables))
+    s += '    conn.query("""\n%s    """ %% (%s))\n\n' % (sql, ",".join(['compId'] * numCompTables))
 
     dbAccessorFile.write(s)
 
@@ -133,20 +136,20 @@ def writeDbAccessor(f, table):
 
     s = ""
 
-    s += 'def insert%s(%s):\n' % (className, objectName)
+    s += 'def insert%s(conn, %s):\n' % (className, objectName)
     s += '    """\n'
     s += '    Function to insert single %s object into database\n' % className
     s += '    """\n\n'
-    s += '    _db.query("INSERT INTO %s"\n' % tableName
-    s += '              "(%s) "\n' % ', '.join(columnNames)
-    s += '              "VALUES "\n'
+    s += '    conn.query("INSERT INTO %s"\n' % tableName
+    s += '               "(%s) "\n' % ', '.join(columnNames)
+    s += '               "VALUES "\n'
     formatTuple = ', '.join("'%s'" for col in columnNames)
     spaceString = ',\n' + ' ' * (14 + len(formatTuple) + 8)
     objectTuple = spaceString.join("%s.__dict__['%s']" % (objectName, 'd_' + dbNameToDelimited(col, "", False)) for col in columnNames)
 
-    s += '              "(%s)" %% (%s))\n\n' % (formatTuple, objectTuple)
+    s += '               "(%s)" %% (%s))\n\n' % (formatTuple, objectTuple)
 
-    s += 'def insert%sList(%sList):\n' % (className, objectName)
+    s += 'def insert%sList(conn, %sList):\n' % (className, objectName)
     s += '    """\n'
     s += '    Function to insert list of %s objects into database\n' % className
     s += '    """\n\n'
@@ -157,17 +160,17 @@ def writeDbAccessor(f, table):
     spaceString = ',\n' + ' ' * (22 + len(formatTuple) + 8)
     objectTuple = spaceString.join("%s.__dict__['%s']" % (objectName, 'd_' + dbNameToDelimited(col, "", False)) for col in columnNames)
     s += '"(%s)" %% (%s))\n\n' % (formatTuple, objectTuple)
-    s += '    _db.query("INSERT INTO %s"\n' % tableName
-    s += '              "(%s) "\n' % ', '.join(columnNames)
-    s += '              "VALUES "\n'
-    s += '              "%s" % ",".join(values))\n\n'
+    s += '    conn.query("INSERT INTO %s"\n' % tableName
+    s += '               "(%s) "\n' % ', '.join(columnNames)
+    s += '               "VALUES "\n'
+    s += '               "%s" % ",".join(values))\n\n'
 
-    s += 'def selectFrom%s():\n' % className
+    s += 'def selectFrom%s(conn):\n' % className
     s += '    """\n'
     s += '    Does select * from %s\n' % tableName
     s += '    Exercise caution - this retrieves all rows of %s\n' % tableName
     s += '    """\n\n'
-    s += '    dbRes = _db.query("SELECT * FROM %s")\n' % tableName
+    s += '    dbRes = conn.query("SELECT * FROM %s")\n' % tableName
     s += '    res = []\n'
     s += '    for row in dbRes.dictresult():\n'
     columnList = ", ".join('row["%s"]' % p for p in columnNames)
@@ -196,12 +199,12 @@ def writeDbObjectWrapper(f, tables):
         s += "        self.d_%s.append(%s)\n" % (tableName, objectName)
         s += "\n"
 
-    s += "    def dumpToDb(self):\n"
+    s += "    def dumpToDb(self, conn):\n"
     for table in tables:
         tableName = table[TABLE_NAME]
         className = dbNameToDelimited(tableName, "", True)
         s += "        if len(self.d_%s) > 0:\n" % tableName
-        s += "            insert%sList(self.d_%s)\n" % (className, tableName)
+        s += "            insert%sList(conn, self.d_%s)\n" % (className, tableName)
     s += "\n\n"
 
     f.write(s)
@@ -212,8 +215,8 @@ def writeDbObjectWrapper(f, tables):
 def main():
     with open(_dir + "schema.json", "r") as jsonSchemaFile, \
          open(_dir + "comp_schema.sql", "w") as schemaFile, \
-         open(_dir + "dbObjects.py", "w") as dbObjectFile, \
-         open(_dir + "dbAccessor.py", "w") as dbAccessorFile:
+         open(_dir + OBJECTS_FILE_NAME + ".py", "w") as dbObjectFile, \
+         open(_dir + ACCESSOR_FILE_NAME + ".py", "w") as dbAccessorFile:
 
         writeDboHeader(dbObjectFile)
         writeDbaHeader(dbAccessorFile)

@@ -8,9 +8,9 @@ from pg import IntegrityError
 import db.dbObjects as dbo
 import db.dbAccessor as dba
 
-from util.sysUtils import *
-from util.compUtils import *
-from util.webUtils import loadPage
+from util.sysutils import *
+from util.computils import *
+from util.webutils import loadPage
 
 LOG_FILE_NAME = ".o2cmScraper.log"
 
