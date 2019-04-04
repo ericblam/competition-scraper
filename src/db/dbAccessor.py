@@ -8,11 +8,12 @@ import os
 
 _dir = os.path.dirname(__file__) + "/"
 
-_db = DB(dbname = 'ballroom_competitions',
-         host   = 'localhost',
-         port   =  5432,
-         user   = 'postgres',
-         passwd = 'postgres')
+def createConn(config):
+    return DB(dbname = config['dbname'],
+              host   = config['host'],
+              port   = config['port'],
+              user   = config['user'],
+              passwd = config['password'])
 
 def dbReset():
     """

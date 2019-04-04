@@ -32,11 +32,12 @@ def writeDbaHeader(dbAccessorFile):
     s += 'from db.dbObjects import *\n\n'
     s += 'from pg import DB, IntegrityError\n\n'
     s += 'import os\n\n_dir = os.path.dirname(__file__) + "/"\n\n'
-    s += "_db = DB(dbname = 'ballroom_competitions',\n"
-    s += "         host   = 'localhost',\n"
-    s += "         port   =  5432,\n"
-    s += "         user   = 'postgres',\n"
-    s += "         passwd = 'postgres')\n\n"
+    s += "def createConn(config):\n"
+    s += "    return DB(dbname = config['dbname'],\n"
+    s += "              host   = config['host'],\n"
+    s += "              port   = config['port'],\n"
+    s += "              user   = config['user'],\n"
+    s += "              passwd = config['password'])\n\n"
     fileWrite(dbAccessorFile, s)
 
 def writeDropsToSchema(schemaFile, table):
