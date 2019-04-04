@@ -1,44 +1,59 @@
 import argparse
+import json
 import queue
+import traceback
 
-from abc import ABC, abstractmethod
-from enum import Enum
-from util.webUtils import getHostname
+from webparser import webparser
+from db import dbAccessor
+from threading import Thread
+from util.webUtils import WebRequest, loadPage
 
-class SiteMetadata:
+class ScraperTask:
 
-    def __init__(self, url, data = None, hint = None):
-        self.url = url
+    """
+    Object containing information on what to scrape next.
+
+    :param request: webUtils.WebRequest representing what page to fetch
+    :param data: multi-level data from previous layer
+    :param hint: hint for what kind of parser to use
+    """
+    def __init__(self, request, data = None, hint = None):
+        self.request = request
         self.data = data
         self.hint = hint
 
-    def getUrl(self):
-        return self.url
+    def __str__(self):
+        return '%s\ndata: %s' % (self.request, self.data)
 
-    def getData(self):
-        return self.data
+"""
+Function each worker calls to do scraping work
+"""
+def scraper_worker(q, conn):
+    while True:
+        task = q.get()
 
-    def getHint(self):
-        return self.hint
+        try:
+            # if there are "None" tasks in the queue, we are done
+            if task is None:
+                break
 
-class CrawlerType(Enum):
-    O2CM = 1
-    COMPMNGR = 2
+            # get HTML
+            html = loadPage(task.request)
 
-hostToCrawlerType = {
-    "o2cm": CrawlerType.O2CM,
-    "compmngr": CrawlerType.COMPMNGR
-}
+            # if no hint, need to create one
+            if task.hint is None:
+                task.hint = webparser.getParserHint(task.request)
 
-class Crawler(ABC):
+            # determine how to parse HTML
+            parser = webparser.ParserFactory(q, conn, task.hint)
 
-    def __init__(self, q):
-        self.queue = q
+            # parse HTML
+            parser.parse(html, task.data)
+        except:
+            traceback.print_exc()
+            pass
 
-    @abstractmethod
-    def scrape(self, siteMetadata):
-        pass
-
+        q.task_done()
 
 def parseArgs():
     """
@@ -47,58 +62,58 @@ def parseArgs():
 
     parser = argparse.ArgumentParser(description="Crawl around a website to scrape")
     parser.add_argument(
-        "seedUrl"
+        "seedUrls"
         , nargs = "+"
         , type  = str
-        , help  = "first url to scrape for information"
-    )
-    parser.add_argument(
-        "-d"
-        , "--domain"
-        , nargs = 1
-        , type  = str
-        , help  = "Main domain name of website to parse"
+        , help  = "first urls to scrape for information"
     )
     parser.add_argument(
         "-n"
-        , "--numCrawlers"
+        , "--numWorkers"
         , nargs   = 1
         , type    = int
-        , default = 4
-        , help    = "Number of crawlers to spawn"
+        , default = [4]
+        , help    = "Number of workers to spawn"
+    )
+    parser.add_argument(
+        "-c"
+        , "--configFile"
+        , nargs   = 1
+        , type    = str
+        , help    = "Configuration file path"
     )
     return parser.parse_args()
-
-def CreateCrawler(t):
-    if t == CrawlerType.O2CM:
-        return t
-    elif t == CrawlerType.COMPMNGR:
-        return t
 
 if __name__ == "__main__":
 
     args = parseArgs()
 
-    host = ""
-    if args.domain is not None:
-        host = getHostname(args.domain)
-    else:
-        host = getHostname(args.seedUrl[0])
+    # initialize config
+    config = {}
+    with open(args.configFile[0]) as configFile:
+        config = json.load(configFile)
 
+    # initialize queue
     q = queue.Queue()
+    for url in args.seedUrls:
+        request = WebRequest(url)
+        request.forceReload = True
+        seedTask = ScraperTask(request, { 'url': url })
+        q.put(seedTask)
 
-    if host not in hostToCrawlerType:
-        print("no crawlers available for '" + host + "'")
-        exit()
+    # start workers
+    workers = []
+    for i in range(args.numWorkers[0]):
+        conn = dbAccessor.createConn(config['db'])
+        worker = Thread(target=scraper_worker, args=(q, conn))
+        worker.start()
+        workers.append(worker)
 
-    crawlers = []
-    for i in range(args.numCrawlers):
-        crawler = CreateCrawler(hostToCrawlerType[host])
-        crawlers.append(crawler)
+    # block until we finish scraping
+    q.join()
 
-    # create threads for crawlers
-    # allocate crawlers to threads appropriately
-    # crawlers should scrape the front of the queue
-    # once done crawlers should push any relevant data to the queue
-
-    # TODO
+    # stop workers
+    for i in range(args.numWorkers[0]):
+        q.put(None)
+    for worker in workers:
+        worker.join()

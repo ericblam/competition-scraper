@@ -5,17 +5,31 @@ from tidylib import tidy_document
 
 CACHE_DIR = os.path.dirname(__file__) + "/../.cache/"
 
-def loadPage(url, data={}, post=False, forceReload=False):
+class WebRequest(object):
+
+    def __init__(self, url, requestType="GET", data={}):
+        self.url = url
+        self.requestType = requestType
+        self.data = data
+        self.forceReload = False
+
+
+def loadPage(requestObj):
     """
-    Loads a page from a url with data (uses GET if !post, else uses POST)
+    Loads a page from a url with data
     """
+
+    url = requestObj.url
+    data = requestObj.data
+    requestType = requestObj.requestType
+    forceReload = requestObj.forceReload
 
     request = urllib.parse.urlencode(data)
 
     sortedDataString = "_".join([str(i) + "=" + str(data[i]) for i in sorted(data.keys())])
     cacheFilename = url
     if (len(sortedDataString) > 0):
-        cacheFilename += "_" + ("POST" if post else "GET") + "_" + sortedDataString
+        cacheFilename += "_" + requestType + "_" + sortedDataString
 
     cacheFilename = cacheFilename.replace("https://","").replace("http://", "").replace("/", "_")
     if (not os.path.exists(CACHE_DIR)):
@@ -29,7 +43,7 @@ def loadPage(url, data={}, post=False, forceReload=False):
         return BeautifulSoup(tidiedPage, "html.parser")
 
     try:
-        if (not post):
+        if not (requestObj.requestType == "GET"):
             getUrl = url + ("?" if len(data) != 0 else "") + request
             response = urllib.request.urlopen(getUrl)
         else:
