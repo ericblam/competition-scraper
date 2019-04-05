@@ -4,31 +4,15 @@ import queue
 import traceback
 
 from webparser import webparser
-from db import dbAccessor
+from db import dbaccessor
 from threading import Thread
-from util.webUtils import WebRequest, loadPage
-
-class ScraperTask:
-
-    """
-    Object containing information on what to scrape next.
-
-    :param request: webUtils.WebRequest representing what page to fetch
-    :param data: multi-level data from previous layer
-    :param hint: hint for what kind of parser to use
-    """
-    def __init__(self, request, data = None, hint = None):
-        self.request = request
-        self.data = data
-        self.hint = hint
-
-    def __str__(self):
-        return '%s\ndata: %s' % (self.request, self.data)
+from util.crawlerutils import ScraperTask
+from util.webutils import WebRequest, loadPage
 
 """
 Function each worker calls to do scraping work
 """
-def scraper_worker(q, conn):
+def scraper_worker(q, conn, config):
     while True:
         task = q.get()
 
@@ -38,17 +22,17 @@ def scraper_worker(q, conn):
                 break
 
             # get HTML
-            html = loadPage(task.request)
+            htmlDOM = loadPage(task.request)
 
             # if no hint, need to create one
             if task.hint is None:
                 task.hint = webparser.getParserHint(task.request)
 
             # determine how to parse HTML
-            parser = webparser.ParserFactory(q, conn, task.hint)
+            parser = webparser.ParserFactory(q, conn, config, task.hint)
 
             # parse HTML
-            parser.parse(html, task.data)
+            parser.parse(htmlDOM, task.data)
         except:
             traceback.print_exc()
             pass
@@ -104,8 +88,8 @@ if __name__ == "__main__":
     # start workers
     workers = []
     for i in range(args.numWorkers[0]):
-        conn = dbAccessor.createConn(config['db'])
-        worker = Thread(target=scraper_worker, args=(q, conn))
+        conn = dbaccessor.createConn(config['db'])
+        worker = Thread(target=scraper_worker, args=(q, conn, config))
         worker.start()
         workers.append(worker)
 

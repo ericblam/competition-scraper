@@ -5,5 +5,11 @@
 	"port": 5432,
 	"user": "postgres",
 	"password": "postgres"
+    },
+    "o2cm": {
+	"comps": [
+	    "rpi19",
+	    "rub19"
+	]
     }
 }
