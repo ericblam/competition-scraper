@@ -15,6 +15,8 @@ class O2cmCompParser(AbstractWebParser):
         mainTable = tables[1]
         rows = mainTable.find_all('tr')
 
+        compId = data['compId']
+
         # Find first link
         rowNum = 0
         while rowNum < len(rows):
@@ -36,10 +38,10 @@ class O2cmCompParser(AbstractWebParser):
 
             # Row is a link. Read event and heats.
             elif (rows[rowNum].find('a') != None):
-                lastHeatName, lastHeatId, lastHeatLink = parseHeatLink(rows[rowNum])
+                lastHeatName, lastHeatId, lastHeatLink = _parseHeatLink(rows[rowNum])
                 if ("combine" not in lastHeatName.lower()):
                     # TODO: add task to queue to get all rounds for this event
-                    # readHeatPages(compId, lastHeatId, lastHeatLink)
+                    _enqueueRounds(self.q, compId, lastHeatName, lastHeatId, lastHeatLink)
                     # TODO: Store data
                     pass
 
@@ -47,7 +49,7 @@ class O2cmCompParser(AbstractWebParser):
             elif (lastHeatName is not None and "combine" not in lastHeatName.lower()):
                 # parseCouple(rowText, compId, lastHeatId, compData)
                 # TODO: parse couple; get last name/first name; may need some sort of thread-safe cache for name -> (firstname, lastname)
-                print(data['compId'], lastHeatName, rowText)
+                # print(data['compId'], lastHeatName, rowText)
                 pass
 
             rowNum += 1
@@ -55,10 +57,23 @@ class O2cmCompParser(AbstractWebParser):
 
             # TODO: Store data
 
-def parseHeatLink(tag):
+def _parseHeatLink(tag):
     heatName = tag.get_text().lstrip().strip()
     heatLink = tag.find('a')['href']
     m = re.match('scoresheet\d.asp\?.+&heatid=(\w+)&.+', heatLink)
     heatId = m.group(1)
     heatLink = 'http://results.o2cm.com/' + heatLink
     return (heatName, heatId, heatLink)
+
+def _enqueueRounds(q, compId, heatName, heatId, heatLink):
+    nextRequest = util.webutils.WebRequest(heatLink, "GET", {})
+    nextData = {
+        "url": heatLink,
+        "compId": compId,
+        "heatId": heatId
+    } # TODO: populate this
+    newTask = util.crawlerutils.ScraperTask(
+        nextRequest,
+        nextData,
+        ParserType.O2CM_ROUNDS)
+    q.put(newTask)

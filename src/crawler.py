@@ -32,7 +32,8 @@ def scraper_worker(q, conn, config):
             parser = webparser.ParserFactory(q, conn, config, task.hint)
 
             # parse HTML
-            parser.parse(htmlDOM, task.data)
+            if parser is not None:
+                parser.parse(htmlDOM, task.data)
         except:
             traceback.print_exc()
             pass
