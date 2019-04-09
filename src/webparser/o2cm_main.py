@@ -28,6 +28,8 @@ class O2cmMainParser(AbstractWebParser):
                 compCode = m.group(1)
                 fullDate = date + " " + year
 
+                # TODO: Store data
+
                 url = 'http://results.o2cm.com/event3.asp'
                 requestData = {
                     'selDiv': '',
@@ -38,9 +40,10 @@ class O2cmMainParser(AbstractWebParser):
                     'submit': 'OK',
                     'event': compId
                 }
+                # TODO: Fix this. It only seems to be doing the GET
                 nextRequest = util.webutils.WebRequest(url, 'POST', requestData)
                 nextData = {
-                    compId: compId
+                    "compId": compId
                 }
                 newTask = util.crawlerutils.ScraperTask(
                     nextRequest,

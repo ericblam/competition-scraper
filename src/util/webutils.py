@@ -13,6 +13,9 @@ class WebRequest(object):
         self.data = data
         self.forceReload = False
 
+    def __str__(self):
+        return "Request to %s (%s); %s" % (self.url, self.requestType, self.data)
+
 
 def loadPage(requestObj):
     """
@@ -43,7 +46,7 @@ def loadPage(requestObj):
         return BeautifulSoup(tidiedPage, "html.parser")
 
     try:
-        if not (requestObj.requestType == "GET"):
+        if requestType == "GET":
             getUrl = url + ("?" if len(data) != 0 else "") + request
             response = urllib.request.urlopen(getUrl)
         else:
