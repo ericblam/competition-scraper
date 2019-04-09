@@ -2,29 +2,30 @@ Ballroom Competition Scraper
 ======================
 This system is meant to gather data from websites such as O2CM about ballroom competitions for analyses of results and placements.
 
-Due to restrictions with urllib, this project uses python3
-
 Make sure that you have the following packages installed:
 
 * postgresql
 * python-tidylib
 
-Make sure that you have the following python installed:
+Make sure that you have the following python packages installed:
 
 * bs4
 * pygresql
 * urllib3
 
-To use o2cmScraper.py to scrape all competitions O2CM has:
+The repository is broken up into several packages:
 
-    $ python3 o2cmScraper.py
+* .
+  * crawler.py
+    * Script that creates threads that run the webparsing framework
+* db
+  * Accessors and objects for competition database objects
+* test
+  * unittest package for testing code in the repository
+* util
+* webparser
+  * single-page parsers, and other webparsing framework code
 
-To use o2cmScraper.py to scrape specific competitions:
+To run the crawler, you simply would need to run:
 
-    $ python3 o2cmScraper.py compId1 compId2 ...
-
-For more help using o2cmScraper.py:
-
-    $ python3 o2cmScraper.py --help
-
-Additionally, competitionResults.py can be used to navigate the data or calculate [YCN](http://ballroom.mit.edu/index.php/ycn-proficiency-points/) points for an individual.
+    $ python3 crawler.py --numWorkers <number-of-threads> --configFile <config-file-path> http://results.o2cm.com
