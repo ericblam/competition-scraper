@@ -19,30 +19,57 @@ class O2cmHeatParser(AbstractWebParser):
         resultTables = tables[:numResultTables]
         summaryTable = None
         coupleAndJudgesTable = tables[-1]
-        if data["roundNum"] == 0 and numResultTables > 1: # multi-dance final
+        isFinal = data["roundNum"] == 0
+        if isFinal and numResultTables > 1: # multi-dance final
             resultTables = tables[:numResultTables-1]
             summaryTable = tables[numResultTables-1]
 
         for table in resultTables:
-            parseTable(table)
+            parseTable(table, isFinal)
 
-def parseTable(table):
+def parseTable(table, isFinal = True):
     rows = table.find_all('tr')
     titleRow = rows[0]
     headerRow = rows[1]
     resultRows = rows[2:]
 
-    title = titleRow.find('td').get_text().strip()
+    danceName = titleRow.find('td').get_text().strip()
     headers = cleanRow(headerRow)
 
     # everything before first space is judge numbers, after is scoring-related
     # skip first column because it is blank
     spaceIndex = headers[1:].index('') + 1
     judgeHeaders = headers[1:spaceIndex]
-    scoringHeaders = headers[spaceIndex+1:]
 
+    # this can theoretically be tossed away, since it is calculated and placement is in the last column
+    scoringHeaders = headers[spaceIndex+1:]
     for r in resultRows:
         row = cleanRow(r)
+        coupleNum = row.pop(0)
+        for j in range(len(judgeHeaders)):
+            print("Dance:",
+                  danceName,
+                  ", Couple:",
+                  coupleNum,
+                  ", Judge:",
+                  judgeHeaders[j],
+                  ", Mark:",
+                  row[j])
+        if isFinal:
+            print("Dance:",
+                  danceName,
+              ", Couple:",
+                  coupleNum,
+                  ", Placement:",
+                  row[-2])
+        else:
+            print("Dance:",
+                  danceName,
+                  ", Couple:",
+                  coupleNum,
+                  ", Recalled:",
+                  row[-1] == 'R')
+
 
 
 def cleanRow(row):

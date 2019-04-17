@@ -24,7 +24,7 @@ if __name__ == "__main__":
     url = "http://results.o2cm.com/scoresheet3.asp"
     compId = "rub19"
     heatId = "40323030"
-    roundNum = 0
+    roundNum = 1
 
     # set up data/requests/tasks
     requestData = {
