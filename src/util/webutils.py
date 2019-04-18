@@ -7,10 +7,11 @@ CACHE_DIR = os.path.dirname(__file__) + "/../.cache/"
 
 class WebRequest(object):
 
-    def __init__(self, url, requestType="GET", data={}):
+    def __init__(self, url, requestType="GET", data={}, headers={}):
         self.url = url
         self.requestType = requestType
         self.data = data
+        self.headers = headers
         self.forceReload = False
 
     def __str__(self):
@@ -27,7 +28,7 @@ def loadPage(requestObj):
     requestType = requestObj.requestType
     forceReload = requestObj.forceReload
 
-    request = urllib.parse.urlencode(data)
+    requestData = urllib.parse.urlencode(data)
 
     sortedDataString = "_".join([str(i) + "=" + str(data[i]) for i in sorted(data.keys())])
     cacheFilename = url
@@ -47,10 +48,13 @@ def loadPage(requestObj):
 
     try:
         if requestType == "GET":
-            getUrl = url + ("?" if len(data) != 0 else "") + request
-            response = urllib.request.urlopen(getUrl)
-        else:
-            response = urllib.request.urlopen(url, request.encode("ascii"))
+            # TODO: use Requests instead so we can send appropriate headers
+            # this is useful since dance.zsconcepts.com uses the "referer"
+            # will also be useful to set user-agent
+            url = url + ("?" if len(data) != 0 else "") + requestData
+
+        urlRequest = urllib.request.Request(url, data=requestData.encode("ascii"), headers=requestObj.headers)
+        response = urllib.request.urlopen(urlRequest)
         html_response = response.read()
         encoding = response.headers.get_content_charset("utf-8")
         decoded_html = html_response.decode(encoding)
