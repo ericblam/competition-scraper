@@ -2,6 +2,7 @@ import json
 import queue
 import sys
 
+from crawler import scrapeFromQueue
 from db import dbaccessor
 from webparser import webparser, parsertype
 from util.crawlerutils import ScraperTask
@@ -45,18 +46,8 @@ if __name__ == "__main__":
         newData,
         parsertype.ParserType.O2CM_HEAT)
 
+    q.put(task)
+
     ############################# actual crawling
 
-    # get HTML
-    htmlDOM = loadPage(task.request)
-
-    # if no hint, need to create one
-    if task.hint is None:
-        task.hint = webparser.getParserHint(task.request)
-
-    # determine how to parse HTML
-    parser = webparser.O2cmHeatParser(q, conn, config)
-
-    # parse HTML
-    if parser is not None:
-        parser.parse(htmlDOM, task.data)
+    scrapeFromQueue(q, conn, config)
