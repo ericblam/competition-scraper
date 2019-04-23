@@ -40,22 +40,48 @@ class O2cmCompParser(AbstractWebParser):
             elif (rows[rowNum].find('a') != None):
                 lastHeatName, lastHeatId, lastHeatLink = _parseHeatLink(rows[rowNum])
                 if ("combine" not in lastHeatName.lower()):
-                    # TODO: add task to queue to get all rounds for this event
-                    _enqueueRounds(self.q, compId, lastHeatName, lastHeatId, lastHeatLink)
-                    # TODO: Store data
-                    pass
+                    self._storeEvent(compId, lastHeatId, lastHeatName, lastHeatLink)
+                    self._enqueueRounds(compId, lastHeatName, lastHeatId, lastHeatLink)
 
             # Row is a couple
             elif (lastHeatName is not None and "combine" not in lastHeatName.lower()):
-                # parseCouple(rowText, compId, lastHeatId, compData)
-                # TODO: parse couple; get last name/first name; may need some sort of thread-safe cache for name -> (firstname, lastname)
-                # print(data['compId'], lastHeatName, rowText)
-                pass
+                coupleNum, leaderName, followerName, placement, coupleLocation = _parseEntry(rows[rowNum].get_text().strip())
+                self._storeEventEntry(compId, lastHeatId, coupleNum, leaderName, followerName, placement, coupleLocation)
 
             rowNum += 1
 
 
-            # TODO: Store data
+    def _storeEvent(self, compId, eventId, eventName, eventUrl):
+        conn = self.conn
+        conn.insert("o2cm.event",
+                    comp_id=compId,
+                    event_id=eventId,
+                    event_name=eventName,
+                    event_url=eventUrl)
+
+    def _storeEventEntry(self, compId, eventId, coupleNum, leaderName, followerName, placement, coupleLocation=None):
+        conn = self.conn
+        conn.insert("o2cm.event_couple",
+                    comp_id=compId,
+                    event_id=eventId,
+                    couple_num=coupleNum,
+                    leader_name=leaderName,
+                    follower_name=followerName,
+                    event_placement=placement,
+                    couple_location=coupleLocation)
+
+    def _enqueueRounds(self, compId, heatName, heatId, heatLink):
+        nextRequest = util.webutils.WebRequest(heatLink, "GET", {})
+        nextData = {
+            "url": heatLink,
+            "compId": compId,
+            "heatId": heatId
+        } # TODO: populate this
+        newTask = util.crawlerutils.ScraperTask(
+            nextRequest,
+            nextData,
+            ParserType.O2CM_ROUNDS)
+        self.q.put(newTask)
 
 def _parseHeatLink(tag):
     heatName = tag.get_text().lstrip().strip()
@@ -65,15 +91,16 @@ def _parseHeatLink(tag):
     heatLink = 'http://results.o2cm.com/' + heatLink
     return (heatName, heatId, heatLink)
 
-def _enqueueRounds(q, compId, heatName, heatId, heatLink):
-    nextRequest = util.webutils.WebRequest(heatLink, "GET", {})
-    nextData = {
-        "url": heatLink,
-        "compId": compId,
-        "heatId": heatId
-    } # TODO: populate this
-    newTask = util.crawlerutils.ScraperTask(
-        nextRequest,
-        nextData,
-        ParserType.O2CM_ROUNDS)
-    q.put(newTask)
+def _parseEntry(entryText):
+    patternBase = "(\d+)\\)\s+(\d+)\s+(.+)\s+\\&\s+(.+)"
+    m = re.match(patternBase + "\s+\-\s+(\w+)", entryText)
+    location = None
+    if m is None:
+        m = re.match(patternBase, entryText)
+    else:
+        location = m.group(5)
+    placement = m.group(1)
+    number = m.group(2)
+    leader = m.group(3)
+    follower = m.group(4)
+    return number, leader, follower, placement, location

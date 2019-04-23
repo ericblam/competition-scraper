@@ -16,13 +16,14 @@ CREATE TABLE o2cm.event (
     , event_url  varchar(256)
 );
 
-CREATE TABLE o2cm.event_couples (
+CREATE TABLE o2cm.event_couple (
     comp_id           varchar(8)
     , event_id        varchar(16)
     , couple_num      int
     , leader_name     varchar(256)
     , follower_name   varchar(256)
     , event_placement int
+    , couple_location varchar(32)
 );
 
 CREATE TABLE o2cm.round_placement (
