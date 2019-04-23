@@ -3,9 +3,9 @@ import queue
 import sys
 
 from crawler import scrapeFromQueue
-from db import dbaccessor
 from webparser import webparser, parsertype
 from util.crawlerutils import ScraperTask
+from util.dbutils import createConn
 from util.webutils import WebRequest, loadPage
 
 if __name__ == "__main__":
@@ -20,7 +20,7 @@ if __name__ == "__main__":
         config = json.load(configFile)
 
     q = queue.Queue()
-    conn = dbaccessor.createConn(config['db'])
+    conn = createConn(config['db'])
 
     url = "http://results.o2cm.com/scoresheet3.asp"
     compId = "rub19"

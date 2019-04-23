@@ -6,7 +6,7 @@ import threading
 import traceback
 
 from webparser import webparser
-from db import dbaccessor
+from util.dbutils import createConn
 from util.crawlerutils import ScraperTask
 from util.webutils import WebRequest, loadPage
 
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     # start workers
     workers = []
     for i in range(args.numWorkers[0]):
-        conn = dbaccessor.createConn(config['db'])
+        conn = createConn(config['db'])
         worker = WorkerThread(q, conn, config)
         worker.start()
         workers.append(worker)
