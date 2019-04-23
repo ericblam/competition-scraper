@@ -5,7 +5,7 @@ import signal
 import threading
 import traceback
 
-from webparser import webparser
+from webparser import parserfactory
 from util.dbutils import createConn
 from util.crawlerutils import ScraperTask
 from util.webutils import WebRequest, loadPage
@@ -33,10 +33,10 @@ def scrapeFromQueue(q, conn, config):
 
         # if no hint, need to create one
         if task.hint is None:
-            task.hint = webparser.getParserHint(task.request)
+            task.hint = parserfactory.getParserHint(task.request)
 
         # determine how to parse HTML
-        parser = webparser.ParserFactory(q, conn, config, task.hint)
+        parser = parserfactory.ParserFactory(q, conn, config, task.hint)
 
         # parse HTML
         if parser is not None:
