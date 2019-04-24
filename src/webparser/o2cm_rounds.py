@@ -9,33 +9,36 @@ class O2cmHeatRoundsParser(AbstractWebParser):
         super(O2cmHeatRoundsParser, self).__init__(q, conn, config)
 
     def parse(self, htmlDOM, data):
-        print("Scraping " + data["compId"] + ", " + data["heatName"])
+        print("Scraping " + data["compId"] + ", " + data["eventName"])
 
         compId = data["compId"]
-        heatId = data["heatId"]
+        heatId = data["eventId"]
 
         heatUrlSimple = data["url"].split("?")[0]
         selCount = htmlDOM.find('select', id='selCount')
         numRounds = 0
+        self._enqueue(compId, heatId, 0, heatUrlSimple)
         if selCount is not None:
             numRounds = len(selCount.find_all('option'))
+            for roundNum in range(1, numRounds):
+                self._enqueue(compId, heatId, roundNum, heatUrlSimple)
 
-            for roundNum in range(0, numRounds):
-                requestData = {
-                    'event': compId,
-                    'heatId': heatId,
-                    'selCount': roundNum
-                }
-                nextRequest = util.webutils.WebRequest(heatUrlSimple, "POST", requestData)
+    def _enqueue(self, compId, heatId, roundNum, heatUrlSimple):
+        requestData = {
+            'event': compId,
+            'heatId': heatId,
+            'selCount': roundNum
+        }
+        nextRequest = util.webutils.WebRequest(heatUrlSimple, "POST", requestData)
 
-                newData = {
-                    'compId': compId,
-                    'heatId': heatId,
-                    'roundNum': roundNum
-                }
+        newData = {
+            'compId': compId,
+            'eventId': heatId,
+            'roundNum': roundNum
+        }
 
-                newTask = util.crawlerutils.ScraperTask(
-                    nextRequest,
-                    newData,
-                    ParserType.O2CM_HEAT)
-                self.q.put(newTask)
+        newTask = util.crawlerutils.ScraperTask(
+            nextRequest,
+            newData,
+            ParserType.O2CM_HEAT)
+        self.q.put(newTask)

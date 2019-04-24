@@ -76,8 +76,8 @@ class O2cmCompParser(AbstractWebParser):
         nextData = {
             "url": heatLink,
             "compId": compId,
-            "heatId": heatId,
-            "heatName": heatName
+            "eventId": heatId,
+            "eventName": heatName
         } # TODO: populate this
         newTask = util.crawlerutils.ScraperTask(
             nextRequest,

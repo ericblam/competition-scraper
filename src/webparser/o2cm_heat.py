@@ -13,67 +13,74 @@ class O2cmHeatParser(AbstractWebParser):
         # find all tables
         # last table will be for listing competitors and judges
         # if it is a final with multiple dances, there will also be a table for the summary
+        compId = data["compId"]
+        eventId = data["eventId"]
+        roundNum = data["roundNum"]
+        isFinal = roundNum == 0
 
         tables = htmlDOM.find_all('table', class_='t1n')
         numResultTables = len(tables) - 1
         resultTables = tables[:numResultTables]
         summaryTable = None
         coupleAndJudgesTable = tables[-1]
-        isFinal = data["roundNum"] == 0
+
         if isFinal and numResultTables > 1: # multi-dance final
             resultTables = tables[:numResultTables-1]
             summaryTable = tables[numResultTables-1]
 
         for table in resultTables:
-            parseTable(table, isFinal)
+            self.parseTable(compId, eventId, roundNum, table, isFinal)
 
-def parseTable(table, isFinal = True):
-    rows = table.find_all('tr')
-    titleRow = rows[0]
-    headerRow = rows[1]
-    resultRows = rows[2:]
+    def parseTable(self, compId, eventId, roundNum, table, isFinal = True):
+        rows = table.find_all('tr')
+        titleRow = rows[0]
+        headerRow = rows[1]
+        resultRows = rows[2:]
 
-    danceName = titleRow.find('td').get_text().strip()
-    headers = cleanRow(headerRow)
+        danceName = titleRow.find('td').get_text().strip()
+        headers = cleanRow(headerRow)
 
-    # everything before first space is judge numbers, after is scoring-related
-    # skip first column because it is blank
-    spaceIndex = headers[1:].index('') + 1
-    judgeHeaders = headers[1:spaceIndex]
+        conn = self.conn
 
-    # this can theoretically be tossed away, since it is calculated and placement is in the last column
-    scoringHeaders = headers[spaceIndex+1:]
-    for r in resultRows:
-        row = cleanRow(r)
-        coupleNum = row.pop(0)
-        for j in range(len(judgeHeaders)):
-            pass
-            # print("Dance:",
-            #       danceName,
-            #       ", Couple:",
-            #       coupleNum,
-            #       ", Judge:",
-            #       judgeHeaders[j],
-            #       ", Mark:",
-            #       row[j])
-        if isFinal:
-            pass
+        # everything before first space is judge numbers, after is scoring-related
+        # skip first column because it is blank
+        spaceIndex = headers[1:].index('') + 1
+        judgeHeaders = headers[1:spaceIndex]
+
+        # this can theoretically be tossed away, since it is calculated and placement is in the last column
+        scoringHeaders = headers[spaceIndex+1:]
+        for r in resultRows:
+            row = cleanRow(r)
+            coupleNum = row.pop(0)
+            for j in range(len(judgeHeaders)):
+                judgeMark = row[j]
+                if row[j] == 'X':
+                    judgeMark = 1
+                conn.insert("o2cm.round_placement",
+                            comp_id=compId,
+                            event_id=eventId,
+                            round_number=roundNum,
+                            dance=danceName,
+                            couple_num=coupleNum,
+                            judge_num=judgeHeaders[j],
+                            mark=judgeMark)
+                pass
+            if isFinal:
+                pass
             # print("Dance:",
             #       danceName,
             #   ", Couple:",
             #       coupleNum,
             #       ", Placement:",
             #       row[-2])
-        else:
-            pass
+            else:
+                pass
             # print("Dance:",
             #       danceName,
             #       ", Couple:",
             #       coupleNum,
             #       ", Recalled:",
             #       row[-1] == 'R')
-
-
 
 def cleanRow(row):
     return list(map(lambda td: td.get_text().strip(), row.find_all('td')))
