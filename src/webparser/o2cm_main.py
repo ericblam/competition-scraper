@@ -69,5 +69,3 @@ class O2cmMainParser(AbstractWebParser):
             nextData,
             ParserType.O2CM_COMP)
         self.q.put(newTask)
-
-        print("Fetched data for %s (%s)" % (compId, compName))

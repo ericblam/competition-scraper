@@ -92,15 +92,19 @@ def _parseHeatLink(tag):
     return (heatName, heatId, heatLink)
 
 def _parseEntry(entryText):
-    patternBase = "(\d+)\\)\s+(\d+)\s+(.+)\s+\\&\s+(.+)"
+    patternBase = "(\d+)\\)\s+(\d+)(\s+(.+))?\s+\\&(\s+(.+))?"
     m = re.match(patternBase + "\s+\-\s+(\w+)", entryText)
     location = None
     if m is None:
         m = re.match(patternBase, entryText)
+        if m is None:
+            print(entryText)
+            # TODO: need to deal with this
+            return 0, "", "", 0, ""
     else:
-        location = m.group(5)
+        location = m.group(7)
     placement = m.group(1)
     number = m.group(2)
-    leader = m.group(3)
-    follower = m.group(4)
+    leader = m.group(4)
+    follower = m.group(6)
     return number, leader, follower, placement, location
