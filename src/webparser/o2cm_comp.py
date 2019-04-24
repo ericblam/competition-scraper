@@ -16,6 +16,7 @@ class O2cmCompParser(AbstractWebParser):
         rows = mainTable.find_all('tr')
 
         compId = data['compId']
+        print("Scraping " + compId)
 
         # Find first link
         rowNum = 0
@@ -75,7 +76,8 @@ class O2cmCompParser(AbstractWebParser):
         nextData = {
             "url": heatLink,
             "compId": compId,
-            "heatId": heatId
+            "heatId": heatId,
+            "heatName": heatName
         } # TODO: populate this
         newTask = util.crawlerutils.ScraperTask(
             nextRequest,

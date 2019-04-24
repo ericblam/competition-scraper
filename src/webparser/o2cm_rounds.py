@@ -9,6 +9,8 @@ class O2cmHeatRoundsParser(AbstractWebParser):
         super(O2cmHeatRoundsParser, self).__init__(q, conn, config)
 
     def parse(self, htmlDOM, data):
+        print("Scraping " + data["compId"] + ", " + data["heatName"])
+
         compId = data["compId"]
         heatId = data["heatId"]
 

@@ -113,6 +113,12 @@ def parseArgs():
         , action  = "store_true"
         , help    = "Show tasks from exception queue"
     )
+    parser.add_argument(
+        "-E"
+        , "--clearExceptions"
+        , action  = "store_true"
+        , help    = "Clear tasks from exception queue"
+    )
     return parser.parse_args()
 
 if __name__ == "__main__":
@@ -130,22 +136,27 @@ if __name__ == "__main__":
     # initialize queue
     q = queue.Queue()
 
-    if args.exceptions or args.showExceptions:
+    if args.showExceptions:
         conn = createConn(config['db'])
         exceptions = conn.query("SELECT error_id, task, error_description FROM crawler.error").getresult()
         for e in exceptions:
             task = pickle.loads(conn.unescape_bytea(e[1]))
+            print(task)
+            print(e[2])
+        exit()
 
-            if args.showExceptions:
-                print(task)
-                print(e[2])
+    if args.clearExceptions:
+        conn = createConn(config['db'])
+        conn.query("DELETE FROM crawler.error")
+        exit()
 
-            if args.exceptions:
-                q.put(task)
-        if args.showExceptions:
-            exit()
-        if args.exceptions:
-            conn.query("DELETE FROM crawler.error")
+    if args.exceptions:
+        conn = createConn(config['db'])
+        exceptions = conn.query("SELECT error_id, task, error_description FROM crawler.error").getresult()
+        for e in exceptions:
+            task = pickle.loads(conn.unescape_bytea(e[1]))
+            q.put(task)
+        conn.query("DELETE FROM crawler.error")
 
     for url in args.seedUrls:
         request = WebRequest(url)

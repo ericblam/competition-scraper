@@ -47,28 +47,31 @@ def parseTable(table, isFinal = True):
         row = cleanRow(r)
         coupleNum = row.pop(0)
         for j in range(len(judgeHeaders)):
-            print("Dance:",
-                  danceName,
-                  ", Couple:",
-                  coupleNum,
-                  ", Judge:",
-                  judgeHeaders[j],
-                  ", Mark:",
-                  row[j])
+            pass
+            # print("Dance:",
+            #       danceName,
+            #       ", Couple:",
+            #       coupleNum,
+            #       ", Judge:",
+            #       judgeHeaders[j],
+            #       ", Mark:",
+            #       row[j])
         if isFinal:
-            print("Dance:",
-                  danceName,
-              ", Couple:",
-                  coupleNum,
-                  ", Placement:",
-                  row[-2])
+            pass
+            # print("Dance:",
+            #       danceName,
+            #   ", Couple:",
+            #       coupleNum,
+            #       ", Placement:",
+            #       row[-2])
         else:
-            print("Dance:",
-                  danceName,
-                  ", Couple:",
-                  coupleNum,
-                  ", Recalled:",
-                  row[-1] == 'R')
+            pass
+            # print("Dance:",
+            #       danceName,
+            #       ", Couple:",
+            #       coupleNum,
+            #       ", Recalled:",
+            #       row[-1] == 'R')
 
 
 
