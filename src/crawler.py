@@ -1,7 +1,9 @@
 import argparse
 import json
+import pickle
 import queue
 import signal
+import sys
 import threading
 import traceback
 
@@ -40,7 +42,14 @@ def scrapeFromQueue(q, conn, config):
 
         # parse HTML
         if parser is not None:
-            parser.parse(htmlDOM, task.data)
+            try:
+                parser.parse(htmlDOM, task.data)
+            except Exception as e:
+                stacktraceText = traceback.format_exc()
+                print(stacktraceText)
+                conn.insert("crawler.error",
+                            task=conn.escape_bytea(pickle.dumps(task)),
+                            error_description=stacktraceText)
     except:
         traceback.print_exc()
 
@@ -92,6 +101,18 @@ def parseArgs():
         , type    = str
         , help    = "Configuration file path"
     )
+    parser.add_argument(
+        "-e"
+        , "--exceptions"
+        , action  = "store_true"
+        , help    = "Load tasks from exception queue"
+    )
+    parser.add_argument(
+        "-x"
+        , "--showExceptions"
+        , action  = "store_true"
+        , help    = "Show tasks from exception queue"
+    )
     return parser.parse_args()
 
 if __name__ == "__main__":
@@ -108,6 +129,24 @@ if __name__ == "__main__":
 
     # initialize queue
     q = queue.Queue()
+
+    if args.exceptions or args.showExceptions:
+        conn = createConn(config['db'])
+        exceptions = conn.query("SELECT error_id, task, error_description FROM crawler.error").getresult()
+        for e in exceptions:
+            task = pickle.loads(conn.unescape_bytea(e[1]))
+
+            if args.showExceptions:
+                print(task)
+                print(e[2])
+
+            if args.exceptions:
+                q.put(task)
+        if args.showExceptions:
+            exit()
+        if args.exceptions:
+            conn.query("DELETE FROM crawler.error")
+
     for url in args.seedUrls:
         request = WebRequest(url)
         request.forceReload = True

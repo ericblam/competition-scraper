@@ -1,9 +1,10 @@
 import json
+import pickle
 import queue
 import sys
 
 from crawler import scrapeFromQueue
-from webparser import webparser, parsertype
+from webparser import parserfactory, parsertype
 from util.crawlerutils import ScraperTask
 from util.dbutils import createConn
 from util.webutils import WebRequest, loadPage
