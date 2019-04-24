@@ -22,14 +22,14 @@ CREATE TABLE o2cm.entry (
     , couple_num      int
     , leader_name     varchar(256)
     , follower_name   varchar(256)
-    , event_placement int
+    , event_placement numeric(6,3)
     , couple_location varchar(32)
 );
 
 CREATE TABLE o2cm.round_placement (
     comp_id        varchar(8)
     , event_id     varchar(16)
-    , round_number int
+    , round_num    int
     , dance        varchar(32)
     , couple_num   int
     , judge_num    int
@@ -39,9 +39,10 @@ CREATE TABLE o2cm.round_placement (
 CREATE TABLE o2cm.round_result (
     comp_id      varchar(8)
     , event_id   varchar(16)
+    , round_num  int
     , dance      varchar(32)
     , couple_num int
-    , placement  int
+    , placement  numeric(4,3)
 );
 
 CREATE TABLE o2cm.judge (

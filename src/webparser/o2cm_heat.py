@@ -32,6 +32,8 @@ class O2cmHeatParser(AbstractWebParser):
         for table in resultTables:
             self.parseTable(compId, eventId, roundNum, table, isFinal)
 
+        # TODO: Store judge information
+
     def parseTable(self, compId, eventId, roundNum, table, isFinal = True):
         rows = table.find_all('tr')
         titleRow = rows[0]
@@ -60,28 +62,25 @@ class O2cmHeatParser(AbstractWebParser):
                 conn.insert("o2cm.round_placement",
                             comp_id=compId,
                             event_id=eventId,
-                            round_number=roundNum,
+                            round_num=roundNum,
                             dance=danceName,
                             couple_num=coupleNum,
                             judge_num=judgeHeaders[j],
                             mark=judgeMark)
-                pass
+
+            placement = 0
             if isFinal:
-                pass
-            # print("Dance:",
-            #       danceName,
-            #   ", Couple:",
-            #       coupleNum,
-            #       ", Placement:",
-            #       row[-2])
+                placement = row[-2]
             else:
-                pass
-            # print("Dance:",
-            #       danceName,
-            #       ", Couple:",
-            #       coupleNum,
-            #       ", Recalled:",
-            #       row[-1] == 'R')
+                placement = 1 if row[-1] == 'R' else 0
+
+            conn.insert("o2cm.round_result",
+                        comp_id=compId,
+                        event_id=eventId,
+                        round_num=roundNum,
+                        dance=danceName,
+                        couple_num=coupleNum,
+                        placement=placement)
 
 def cleanRow(row):
     return list(map(lambda td: td.get_text().strip(), row.find_all('td')))
