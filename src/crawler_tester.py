@@ -3,11 +3,11 @@ import pickle
 import queue
 import sys
 
-from crawler import scrapeFromQueue
-from webparser import parserfactory, parsertype
 from util.crawlerutils import ScraperTask
 from util.dbutils import createConn
 from util.webutils import WebRequest, loadPage
+from webcrawler.worker import scrapeFromQueue
+from webparser import parserfactory, parsertype
 
 if __name__ == "__main__":
 
@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
     newData = {
         'compId': compId,
-        'heatId': heatId,
+        'eventId': heatId,
         'roundNum': roundNum
     }
 

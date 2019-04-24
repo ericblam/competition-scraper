@@ -1,78 +1,19 @@
 import argparse
 import json
-import pickle
 import queue
 import signal
 import sys
-import threading
-import traceback
 
-from webparser import parserfactory
+from webcrawler.worker import WorkerThread
 from util.dbutils import createConn
 from util.crawlerutils import ScraperTask
-from util.webutils import WebRequest, loadPage
+from util.webutils import WebRequest
 
 class CrawlerExit(Exception):
     pass
 
 def _crawler_shutdown(signum, frame):
     raise CrawlerExit
-
-"""
-Function each worker calls to do scraping work
-Returns True if finished, False otherwise
-"""
-def scrapeFromQueue(q, conn, config):
-    task = q.get()
-
-    try:
-        # if there are "None" tasks in the queue, we are done
-        if task is None:
-            return True
-
-        # get HTML
-        htmlDOM = loadPage(task.request)
-
-        # if no hint, need to create one
-        if task.hint is None:
-            task.hint = parserfactory.getParserHint(task.request)
-
-        # determine how to parse HTML
-        parser = parserfactory.ParserFactory(q, conn, config, task.hint)
-
-        # parse HTML
-        if parser is not None:
-            try:
-                parser.parse(htmlDOM, task.data)
-            except Exception as e:
-                stacktraceText = traceback.format_exc()
-                print(stacktraceText)
-                conn.insert("crawler.error",
-                            task=conn.escape_bytea(pickle.dumps(task)),
-                            error_description=stacktraceText)
-    except:
-        traceback.print_exc()
-
-    q.task_done()
-
-    return False
-
-class WorkerThread(threading.Thread):
-
-    def __init__(self, q, conn, config):
-        super(WorkerThread, self).__init__()
-        self.q = q
-        self.conn = conn
-        self.config = config
-        self.stop_event = threading.Event()
-
-    def run(self):
-        while not self.stop_event.is_set():
-            if scrapeFromQueue(self.q, self.conn, self.config):
-                break
-
-    def stop(self):
-        self.stop_event.set()
 
 def parseArgs():
     """
@@ -100,6 +41,12 @@ def parseArgs():
         , nargs   = 1
         , type    = str
         , help    = "Configuration file path"
+    )
+    parser.add_argument(
+        "-r"
+        , "--reload"
+        , action = "store_true"
+        , help   = "Reload seedUrls - do not use cache"
     )
     parser.add_argument(
         "-e"
@@ -160,7 +107,7 @@ if __name__ == "__main__":
 
     for url in args.seedUrls:
         request = WebRequest(url)
-        request.forceReload = True
+        request.forceReload = args.reload
         seedTask = ScraperTask(request, { 'url': url })
         q.put(seedTask)
 

@@ -62,7 +62,7 @@ class O2cmCompParser(AbstractWebParser):
 
     def _storeEventEntry(self, compId, eventId, coupleNum, leaderName, followerName, placement, coupleLocation=None):
         conn = self.conn
-        conn.insert("o2cm.event_couple",
+        conn.insert("o2cm.entry",
                     comp_id=compId,
                     event_id=eventId,
                     couple_num=coupleNum,

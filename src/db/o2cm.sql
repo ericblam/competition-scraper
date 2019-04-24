@@ -16,7 +16,7 @@ CREATE TABLE o2cm.event (
     , event_url  varchar(256)
 );
 
-CREATE TABLE o2cm.event_couple (
+CREATE TABLE o2cm.entry (
     comp_id           varchar(8)
     , event_id        varchar(16)
     , couple_num      int
@@ -34,6 +34,14 @@ CREATE TABLE o2cm.round_placement (
     , couple_num   int
     , judge_num    int
     , mark         int
+);
+
+CREATE TABLE o2cm.round_result (
+    comp_id      varchar(8)
+    , event_id   varchar(16)
+    , dance      varchar(32)
+    , couple_num int
+    , placement  int
 );
 
 CREATE TABLE o2cm.judge (

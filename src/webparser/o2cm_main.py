@@ -37,8 +37,9 @@ class O2cmMainParser(AbstractWebParser):
     def _resetData(self, compId):
         conn = self.conn
         conn.query("DELETE FROM o2cm.judge WHERE comp_id = $1", compId)
+        conn.query("DELETE FROM o2cm.round_result WHERE comp_id = $1", compId)
         conn.query("DELETE FROM o2cm.round_placement WHERE comp_id = $1", compId)
-        conn.query("DELETE FROM o2cm.event_couple WHERE comp_id = $1", compId)
+        conn.query("DELETE FROM o2cm.entry WHERE comp_id = $1", compId)
         conn.query("DELETE FROM o2cm.event WHERE comp_id = $1", compId)
         conn.query("DELETE FROM o2cm.competition WHERE comp_id = $1", compId)
 
