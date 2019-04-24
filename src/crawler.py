@@ -81,7 +81,7 @@ if __name__ == "__main__":
         config = json.load(configFile)
 
     # initialize queue
-    q = queue.Queue()
+    q = queue.LifoQueue()
 
     if args.showExceptions:
         conn = createConn(config['db'])
