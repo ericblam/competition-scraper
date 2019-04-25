@@ -47,6 +47,8 @@ CREATE TABLE o2cm.round_result (
 
 CREATE TABLE o2cm.judge (
     comp_id      varchar(8)
+    , event_id   varchar(16)
+    , round_num  int
     , judge_num  int
-    , judge_name varchar(16)
+    , judge_name varchar(128)
 );

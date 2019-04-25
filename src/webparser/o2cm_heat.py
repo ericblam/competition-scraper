@@ -30,9 +30,9 @@ class O2cmHeatParser(AbstractWebParser):
             summaryTable = tables[numResultTables-1]
 
         for table in resultTables:
-            self.parseTable(compId, eventId, roundNum, table, isFinal)
+           self.parseTable(compId, eventId, roundNum, table, isFinal)
 
-        # TODO: Store judge information
+        self.parseJudgeTable(compId, eventId, roundNum, coupleAndJudgesTable, len(getJudgeHeaders(resultTables[0])))
 
     def parseTable(self, compId, eventId, roundNum, table, isFinal = True):
         rows = table.find_all('tr')
@@ -45,10 +45,8 @@ class O2cmHeatParser(AbstractWebParser):
 
         conn = self.conn
 
-        # everything before first space is judge numbers, after is scoring-related
-        # skip first column because it is blank
         spaceIndex = headers[1:].index('') + 1
-        judgeHeaders = headers[1:spaceIndex]
+        judgeHeaders = getJudgeHeaders(table)
 
         # this can theoretically be tossed away, since it is calculated and placement is in the last column
         scoringHeaders = headers[spaceIndex+1:]
@@ -82,5 +80,35 @@ class O2cmHeatParser(AbstractWebParser):
                         couple_num=coupleNum,
                         placement=placement)
 
+    def parseJudgeTable(self, compId, eventId, roundNum, table, numJudges):
+        rows = table.find_all('tr')
+        judgeRows = rows[-2*(numJudges)+1:]
+
+        conn = self.conn
+
+        for row in judgeRows:
+            cells = row.find_all('td')
+            if len(cells) < 2:
+                continue
+            judgeNum = cells[0].get_text().strip()
+            judgeName = cells[1].get_text().strip()
+            conn.insert("o2cm.judge",
+                        comp_id=compId,
+                        event_id=eventId,
+                        round_num=roundNum,
+                        judge_num=judgeNum,
+                        judge_name=judgeName)
+
 def cleanRow(row):
     return list(map(lambda td: td.get_text().strip(), row.find_all('td')))
+
+def getJudgeHeaders(table):
+    rows = table.find_all('tr')
+    headerRow = rows[1]
+    headers = cleanRow(headerRow)
+
+    # everything before first space is judge numbers, after is scoring-related
+    # skip first column because it is blank
+    spaceIndex = headers[1:].index('') + 1
+    judgeHeaders = headers[1:spaceIndex]
+    return judgeHeaders
