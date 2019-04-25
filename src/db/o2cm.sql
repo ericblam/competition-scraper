@@ -14,6 +14,7 @@ CREATE TABLE o2cm.event (
     , event_id   varchar(16)
     , event_name varchar(256)
     , event_url  varchar(256)
+    , event_num  int
 );
 
 CREATE TABLE o2cm.entry (

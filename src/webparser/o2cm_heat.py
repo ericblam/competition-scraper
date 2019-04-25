@@ -2,6 +2,7 @@ from webparser.abstractparser import AbstractWebParser
 from webparser.parsertype import ParserType
 import util.webutils
 import util.crawlerutils
+import util.textutils
 
 class O2cmHeatParser(AbstractWebParser):
 
@@ -54,7 +55,7 @@ class O2cmHeatParser(AbstractWebParser):
             row = cleanRow(r)
             coupleNum = row.pop(0)
             for j in range(len(judgeHeaders)):
-                judgeMark = row[j]
+                judgeMark = util.textutils.convert(row[j], int)
                 if row[j] == 'X':
                     judgeMark = 1
                 conn.insert("o2cm.round_placement",
@@ -68,7 +69,7 @@ class O2cmHeatParser(AbstractWebParser):
 
             placement = 0
             if isFinal:
-                placement = row[-2]
+                placement = util.textutils.convert(row[-2], float)
             else:
                 placement = 1 if row[-1] == 'R' else 0
 

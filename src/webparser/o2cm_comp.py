@@ -20,6 +20,7 @@ class O2cmCompParser(AbstractWebParser):
 
         # Find first link
         rowNum = 0
+        eventNum = 0
         while rowNum < len(rows):
             if (rows[rowNum].find('a') != None):
                 break
@@ -41,7 +42,8 @@ class O2cmCompParser(AbstractWebParser):
             elif (rows[rowNum].find('a') != None):
                 lastHeatName, lastHeatId, lastHeatLink = _parseHeatLink(rows[rowNum])
                 if ("combine" not in lastHeatName.lower()):
-                    self._storeEvent(compId, lastHeatId, lastHeatName, lastHeatLink)
+                    self._storeEvent(compId, lastHeatId, lastHeatName, lastHeatLink, eventNum)
+                    eventNum += 1
                     self._enqueueRounds(compId, lastHeatName, lastHeatId, lastHeatLink)
 
             # Row is a couple
@@ -52,13 +54,16 @@ class O2cmCompParser(AbstractWebParser):
             rowNum += 1
 
 
-    def _storeEvent(self, compId, eventId, eventName, eventUrl):
+    def _storeEvent(self, compId, eventId, eventName, eventUrl, eventNum):
         conn = self.conn
+
+        # TODO: store event "number" (i.e. "first in the day")
         conn.insert("o2cm.event",
                     comp_id=compId,
                     event_id=eventId,
                     event_name=eventName,
-                    event_url=eventUrl)
+                    event_url=eventUrl,
+                    event_num=eventNum)
 
     def _storeEventEntry(self, compId, eventId, coupleNum, leaderName, followerName, placement, coupleLocation=None):
         conn = self.conn

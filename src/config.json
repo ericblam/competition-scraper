@@ -10,6 +10,24 @@
 	"comps": [
 	    "rpi19",
 	    "rub19"
+	],
+	"_comps": [
+	    "up19",
+	    "big18",
+	    "tub18",
+	    "bbe18",
+	    "wsz18",
+	    "mit18",
+	    "usa18",
+	    "upc18",
+	    "mac18",
+	    "big17",
+	    "tub17",
+	    "bbe17",
+	    "ucb17",
+	    "wsz17",
+	    "mit17",
+	    "rpi17"
 	]
     }
 }
