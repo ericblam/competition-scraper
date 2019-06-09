@@ -4,14 +4,18 @@ This system is meant to gather data from websites such as O2CM about ballroom co
 
 Make sure that you have the following packages installed:
 
+* libpq-dev
 * postgresql
 * python-tidylib
 
 Make sure that you have the following python packages installed:
 
+* urllib3
+* pytidylib
 * bs4
 * pygresql
-* urllib3
+
+Additionally, you will need a database running with the configurations specified in src/config.json and the specified database loaded with the SQL files in src/db.
 
 The repository is broken up into several packages:
 
