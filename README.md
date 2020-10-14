@@ -6,7 +6,7 @@ Make sure that you have the following packages installed:
 
 * libpq-dev
 * postgresql
-* python-tidylib
+* python3-tidylib
 
 Make sure that you have the following python packages installed:
 
