@@ -16,8 +16,14 @@ class O2cmMainParser(AbstractWebParser):
             compsOfInterest = self.config['o2cm']['comps']
 
         compLinks = htmlDOM.find_all('a')
+        yearInput = htmlDOM.find_all('input', id='inyear')[0]
+        year = int(yearInput['value'])
+        monthInput = htmlDOM.find_all('input', id='inmonth')[0]
+        month = int(monthInput['value'])
+
+        print("Scraping o2cm: %d %d" % (year, month))
+
         for tag in compLinks:
-            year = tag.find_previous('td', 'h3').get_text().strip()
             date = tag.parent.previous_sibling.previous_sibling.string.strip()
             compName = tag.get_text()
             link = tag['href']
@@ -29,10 +35,20 @@ class O2cmMainParser(AbstractWebParser):
             if (len(compsOfInterest) == 0 or compId in compsOfInterest):
                 m = re.match('([a-z]+)\d+.*', compId)
                 # compCode = m.group(1)
-                fullDate = date + " " + year
+                fullDate = date + " " + str(year)
 
                 self._storeData(compId, compName, fullDate)
-                self._createNextRequest(compId, compName)
+                self._createCompPageRequest(compId, compName)
+
+        minYear = int(yearInput['min'])
+        month -= 1
+
+        if month < 1:
+            month = 12
+            year -= 1
+
+        if year >= minYear:
+            self._createNextMainPageRequest(year, month)
 
     def _resetData(self, compId):
         conn = self.conn
@@ -50,7 +66,20 @@ class O2cmMainParser(AbstractWebParser):
                     comp_name=compName,
                     comp_date=compDate)
 
-    def _createNextRequest(self, compId, compName=""):
+    def _createNextMainPageRequest(self, year, month):
+        url = 'http://results.o2cm.com'
+        requestData = {
+            'inyear': year,
+            'inmonth': month
+        }
+        nextRequest = util.webutils.WebRequest(url, 'POST', requestData)
+        newTask = util.crawlerutils.ScraperTask(
+            nextRequest,
+            None,
+            ParserType.O2CM_MAIN)
+        self.q.put(newTask)
+
+    def _createCompPageRequest(self, compId, compName=""):
         url = 'http://results.o2cm.com/event3.asp'
         requestData = {
             'selDiv': '',
