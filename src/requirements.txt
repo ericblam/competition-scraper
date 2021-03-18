@@ -1,0 +1,4 @@
+urllib3
+pytidylib
+bs4
+pygresql
