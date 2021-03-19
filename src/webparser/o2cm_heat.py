@@ -1,3 +1,5 @@
+import logging
+
 from webparser.abstractparser import AbstractWebParser
 from webparser.parsertype import ParserType
 import util.webutils
@@ -10,7 +12,7 @@ class O2cmHeatParser(AbstractWebParser):
         super(O2cmHeatParser, self).__init__(q, conn, config)
 
     def parse(self, htmlDOM, data):
-        print("Scraping " + data["compId"] + ", " + data["eventId"] + " Round " + str(data["roundNum"]))
+        logging.info("Scraping " + data["compId"] + ", " + data["eventId"] + " Round " + str(data["roundNum"]))
 
         # find all tables
         # last table will be for listing competitors and judges

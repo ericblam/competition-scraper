@@ -1,3 +1,4 @@
+import logging
 import re
 
 from webparser.abstractparser import AbstractWebParser
@@ -16,7 +17,7 @@ class O2cmCompParser(AbstractWebParser):
         rows = mainTable.find_all('tr')
 
         compId = data['compId']
-        print("Scraping " + compId)
+        logging.info("Scraping " + compId)
 
         # Find first link
         rowNum = 0
@@ -105,7 +106,7 @@ def _parseEntry(entryText):
     if m is None:
         m = re.match(patternBase, entryText)
         if m is None:
-            print(entryText)
+            logging.info(entryText)
             # TODO: need to deal with this
             return 0, "", "", 0, ""
     else:

@@ -1,4 +1,6 @@
+import logging
 import os
+
 import urllib.error, urllib.parse, urllib.request
 from bs4 import BeautifulSoup
 from tidylib import tidy_document
@@ -66,7 +68,7 @@ def loadPage(requestObj):
 
         return BeautifulSoup(tidiedPage, "html.parser")
     except urllib.error.HTTPError:
-        print("Failed to fetch %s with request: %s" % (url, request))
+        logging.error("Failed to fetch %s with request: %s" % (url, requestObj))
         return None
     # return BeautifulSoup(u, "html.parser")
 

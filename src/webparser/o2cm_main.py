@@ -1,3 +1,4 @@
+import logging
 import re
 
 from webparser.abstractparser import AbstractWebParser
@@ -21,19 +22,19 @@ class O2cmMainParser(AbstractWebParser):
         monthInput = htmlDOM.find_all('input', id='inmonth')[0]
         month = int(monthInput['value'])
 
-        print("Scraping o2cm: %d %d" % (year, month))
+        logging.info("Scraping o2cm: %d %d" % (year, month))
 
         for tag in compLinks:
             date = tag.parent.previous_sibling.previous_sibling.string.strip()
             compName = tag.get_text()
             link = tag['href']
-            m = re.match('event[23].asp\?event=([a-zA-Z]{0,4}\d{0,5}[a-zA-Z]?)&.*', link)
+            m = re.match(r'event[23].asp\?event=([a-zA-Z]{0,4}\d{0,5}[a-zA-Z]?)&.*', link)
             compId = m.group(1).lower()
 
             self._resetData(compId)
 
             if (len(compsOfInterest) == 0 or compId in compsOfInterest):
-                m = re.match('([a-z]+)\d+.*', compId)
+                m = re.match(r'([a-z]+)\d+.*', compId)
                 # compCode = m.group(1)
                 fullDate = date + " " + str(year)
 

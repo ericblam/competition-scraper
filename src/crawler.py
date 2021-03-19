@@ -1,5 +1,6 @@
 import argparse
 import json
+import logging
 import pickle
 import queue
 import signal
@@ -69,6 +70,32 @@ def parseArgs():
     )
     return parser.parse_args()
 
+def configureLogging(config):
+    LOGGING_CONFIG_NAME = 'logging'
+    LOGGING_CONFIG_PATH_NAME = 'path'
+    LOGGING_CONFIG_LEVEL_NAME = 'level'
+    if LOGGING_CONFIG_NAME not in config or LOGGING_CONFIG_PATH_NAME not in config[LOGGING_CONFIG_NAME]:
+        return
+
+    log_level = logging.INFO
+    if LOGGING_CONFIG_LEVEL_NAME in config[LOGGING_CONFIG_NAME] is not None:
+        log_level = getattr(logging, config[LOGGING_CONFIG_NAME][LOGGING_CONFIG_LEVEL_NAME].upper(), logging.INFO)
+
+    logger = logging.getLogger()
+    logger.setLevel(log_level)
+
+    console_log_formatter = logging.Formatter('%(levelname)s %(message)s')
+    console_log = logging.StreamHandler(stream=sys.stdout)
+    console_log.setLevel(log_level)
+    console_log.setFormatter(console_log_formatter)
+    logger.addHandler(console_log)
+
+    file_log_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(module)s: %(message)s')
+    file_log = logging.FileHandler(config[LOGGING_CONFIG_NAME][LOGGING_CONFIG_PATH_NAME])
+    file_log.setLevel(log_level)
+    file_log.setFormatter(file_log_formatter)
+    logger.addHandler(file_log)
+
 if __name__ == "__main__":
 
     signal.signal(signal.SIGTERM, _crawler_shutdown)
@@ -81,6 +108,9 @@ if __name__ == "__main__":
     with open(args.configFile[0]) as configFile:
         config = json.load(configFile)
 
+    configureLogging(config)
+    logger = logging.getLogger()
+
     # initialize queue
     q = queue.LifoQueue()
 
@@ -89,8 +119,8 @@ if __name__ == "__main__":
         exceptions = conn.query("SELECT error_id, task, error_description FROM crawler.error").getresult()
         for e in exceptions:
             task = pickle.loads(conn.unescape_bytea(e[1]))
-            print(task)
-            print(e[2])
+            logger.error(task)
+            logger.error(e[2])
         exit()
 
     if args.clearExceptions:
@@ -124,7 +154,7 @@ if __name__ == "__main__":
         # block until we finish scraping
         q.join()
     except CrawlerExit:
-        print("Stopping crawler")
+        logging.info("Stopping crawler")
         for worker in workers:
             worker.stop()
     finally:

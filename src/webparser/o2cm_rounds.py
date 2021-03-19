@@ -1,3 +1,5 @@
+import logging
+
 from webparser.abstractparser import AbstractWebParser
 from webparser.parsertype import ParserType
 import util.webutils
@@ -9,7 +11,7 @@ class O2cmHeatRoundsParser(AbstractWebParser):
         super(O2cmHeatRoundsParser, self).__init__(q, conn, config)
 
     def parse(self, htmlDOM, data):
-        print("Scraping " + data["compId"] + ", " + data["eventName"])
+        logging.info("Scraping " + data["compId"] + ", " + data["eventName"])
 
         compId = data["compId"]
         heatId = data["eventId"]

@@ -1,3 +1,4 @@
+import logging
 import pickle
 import threading
 import traceback
@@ -32,7 +33,7 @@ def scrapeFromQueue(q, conn, config):
             parser.parse(htmlDOM, task.data)
     except:
         stacktraceText = traceback.format_exc()
-        print(stacktraceText)
+        logging.error(stacktraceText)
         conn.insert("crawler.error",
                     task=conn.escape_bytea(pickle.dumps(task)),
                     error_description=stacktraceText)
