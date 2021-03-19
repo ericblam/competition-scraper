@@ -5,11 +5,12 @@ from webparser.abstractparser import AbstractWebParser
 from webparser.parsertype import ParserType
 import util.webutils
 import util.crawlerutils
+from util.dbutils import createConnFromConfig
 
 class O2cmMainParser(AbstractWebParser):
 
-    def __init__(self, q, conn, config=None):
-        super(O2cmMainParser, self).__init__(q, conn, config)
+    def __init__(self, q, config):
+        super(O2cmMainParser, self).__init__(q, config)
 
     def parse(self, htmlDOM, data):
         compsOfInterest = []
@@ -52,20 +53,20 @@ class O2cmMainParser(AbstractWebParser):
             self._createNextMainPageRequest(year, month)
 
     def _resetData(self, compId):
-        conn = self.conn
-        conn.query("DELETE FROM o2cm.judge WHERE comp_id = $1", compId)
-        conn.query("DELETE FROM o2cm.round_result WHERE comp_id = $1", compId)
-        conn.query("DELETE FROM o2cm.round_placement WHERE comp_id = $1", compId)
-        conn.query("DELETE FROM o2cm.entry WHERE comp_id = $1", compId)
-        conn.query("DELETE FROM o2cm.event WHERE comp_id = $1", compId)
-        conn.query("DELETE FROM o2cm.competition WHERE comp_id = $1", compId)
+        with createConnFromConfig(self.config) as conn:
+            conn.query("DELETE FROM o2cm.judge WHERE comp_id = $1", compId)
+            conn.query("DELETE FROM o2cm.round_result WHERE comp_id = $1", compId)
+            conn.query("DELETE FROM o2cm.round_placement WHERE comp_id = $1", compId)
+            conn.query("DELETE FROM o2cm.entry WHERE comp_id = $1", compId)
+            conn.query("DELETE FROM o2cm.event WHERE comp_id = $1", compId)
+            conn.query("DELETE FROM o2cm.competition WHERE comp_id = $1", compId)
 
     def _storeData(self, compId, compName, compDate):
-        conn = self.conn
-        conn.insert("o2cm.competition",
-                    comp_id=compId,
-                    comp_name=compName,
-                    comp_date=compDate)
+        with createConnFromConfig(self.config) as conn:
+            conn.insert("o2cm.competition",
+                        comp_id=compId,
+                        comp_name=compName,
+                        comp_date=compDate)
 
     def _createNextMainPageRequest(self, year, month):
         url = 'http://results.o2cm.com'

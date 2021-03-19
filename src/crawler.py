@@ -7,7 +7,7 @@ import signal
 import sys
 
 from webcrawler.worker import WorkerThread
-from util.dbutils import createConn
+from util.dbutils import createConnFromConfig
 from util.crawlerutils import ScraperTask
 from util.webutils import WebRequest
 
@@ -115,26 +115,27 @@ if __name__ == "__main__":
     q = queue.LifoQueue()
 
     if args.showExceptions:
-        conn = createConn(config['db'])
-        exceptions = conn.query("SELECT error_id, task, error_description FROM crawler.error").getresult()
-        for e in exceptions:
-            task = pickle.loads(conn.unescape_bytea(e[1]))
-            logger.error(task)
-            logger.error(e[2])
-        exit()
+        with createConnFromConfig(config) as conn:
+            exceptions = conn.query("SELECT error_id, task, error_description FROM crawler.error").getresult()
+            for e in exceptions:
+                task = pickle.loads(conn.unescape_bytea(e[1]))
+                logger.error(task)
+                logger.error(e[2])
+            exit()
 
     if args.clearExceptions:
-        conn = createConn(config['db'])
-        conn.query("DELETE FROM crawler.error")
-        exit()
+        with createConnFromConfig(config) as conn:
+            conn.query("DELETE FROM crawler.error")
+            exit()
 
     if args.exceptions:
-        conn = createConn(config['db'])
-        exceptions = conn.query("SELECT error_id, task, error_description FROM crawler.error").getresult()
-        for e in exceptions:
-            task = pickle.loads(conn.unescape_bytea(e[1]))
-            q.put(task)
-        conn.query("DELETE FROM crawler.error")
+        with createConnFromConfig(config) as conn:
+            conn = createConnFromConfig(config)
+            exceptions = conn.query("SELECT error_id, task, error_description FROM crawler.error").getresult()
+            for e in exceptions:
+                task = pickle.loads(conn.unescape_bytea(e[1]))
+                q.put(task)
+            conn.query("DELETE FROM crawler.error")
 
     for url in args.seedUrls:
         request = WebRequest(url)
@@ -145,8 +146,8 @@ if __name__ == "__main__":
     # start workers
     workers = []
     for i in range(args.numWorkers[0]):
-        conn = createConn(config['db'])
-        worker = WorkerThread(q, conn, config)
+        conn = createConnFromConfig(config)
+        worker = WorkerThread(q, config)
         worker.start()
         workers.append(worker)
 

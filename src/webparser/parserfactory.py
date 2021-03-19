@@ -18,8 +18,8 @@ def getParserHint(request):
 """
 Returns a WebParser object
 """
-def ParserFactory(q, conn, config, parserType):
+def ParserFactory(q, config, parserType):
     try:
-        return _PARSERS[parserType](q, conn, config)
+        return _PARSERS[parserType](q, config)
     except KeyError:
         return None

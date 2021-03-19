@@ -4,13 +4,14 @@ import threading
 import traceback
 
 from webparser import parserfactory
+from util.dbutils import createConnFromConfig
 from util.webutils import WebRequest, loadPage
 
 """
 Function each worker calls to do scraping work
 Returns True if finished, False otherwise
 """
-def scrapeFromQueue(q, conn, config):
+def scrapeFromQueue(q, config):
     task = q.get()
 
     try:
@@ -26,7 +27,7 @@ def scrapeFromQueue(q, conn, config):
             task.hint = parserfactory.getParserHint(task.request)
 
         # determine how to parse HTML
-        parser = parserfactory.ParserFactory(q, conn, config, task.hint)
+        parser = parserfactory.ParserFactory(q, config, task.hint)
 
         # parse HTML
         if parser is not None:
@@ -34,9 +35,10 @@ def scrapeFromQueue(q, conn, config):
     except:
         stacktraceText = traceback.format_exc()
         logging.error(stacktraceText)
-        conn.insert("crawler.error",
-                    task=conn.escape_bytea(pickle.dumps(task)),
-                    error_description=stacktraceText)
+        with createConnFromConfig(config) as conn:
+            conn.insert("crawler.error",
+                        task=conn.escape_bytea(pickle.dumps(task)),
+                        error_description=stacktraceText)
 
     q.task_done()
 
@@ -44,16 +46,15 @@ def scrapeFromQueue(q, conn, config):
 
 class WorkerThread(threading.Thread):
 
-    def __init__(self, q, conn, config):
+    def __init__(self, q, config):
         super(WorkerThread, self).__init__()
         self.q = q
-        self.conn = conn
         self.config = config
         self.stop_event = threading.Event()
 
     def run(self):
         while not self.stop_event.is_set():
-            if scrapeFromQueue(self.q, self.conn, self.config):
+            if scrapeFromQueue(self.q, self.config):
                 break
 
     def stop(self):

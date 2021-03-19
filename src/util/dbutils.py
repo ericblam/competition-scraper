@@ -1,8 +1,13 @@
 from pg import DB
 
-def createConn(config):
-    return DB(dbname = config['dbname'],
-              host   = config['host'],
-              port   = config['port'],
-              user   = config['user'],
-              passwd = config['password'])
+def createConnFromConfig(config):
+    if 'db' not in config:
+        raise RuntimeError('db config missing from configuration')
+
+    dbconfig = config['db']
+
+    return DB(dbname = dbconfig['dbname'],
+              host   = dbconfig['host'],
+              port   = dbconfig['port'],
+              user   = dbconfig['user'],
+              passwd = dbconfig['password'])

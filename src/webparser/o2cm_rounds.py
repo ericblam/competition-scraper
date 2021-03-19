@@ -7,8 +7,8 @@ import util.crawlerutils
 
 class O2cmHeatRoundsParser(AbstractWebParser):
 
-    def __init__(self, q, conn, config=None):
-        super(O2cmHeatRoundsParser, self).__init__(q, conn, config)
+    def __init__(self, q, config):
+        super(O2cmHeatRoundsParser, self).__init__(q, config)
 
     def parse(self, htmlDOM, data):
         logging.info("Scraping " + data["compId"] + ", " + data["eventName"])

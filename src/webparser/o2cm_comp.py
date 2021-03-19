@@ -5,11 +5,12 @@ from webparser.abstractparser import AbstractWebParser
 from webparser.parsertype import ParserType
 import util.webutils
 import util.crawlerutils
+from util.dbutils import createConnFromConfig
 
 class O2cmCompParser(AbstractWebParser):
 
-    def __init__(self, q, conn, config=None):
-        super(O2cmCompParser, self).__init__(q, conn, config)
+    def __init__(self, q, config):
+        super(O2cmCompParser, self).__init__(q, config)
 
     def parse(self, htmlDOM, data):
         tables = htmlDOM.find_all('table')
@@ -56,26 +57,25 @@ class O2cmCompParser(AbstractWebParser):
 
 
     def _storeEvent(self, compId, eventId, eventName, eventUrl, eventNum):
-        conn = self.conn
-
-        # TODO: store event "number" (i.e. "first in the day")
-        conn.insert("o2cm.event",
-                    comp_id=compId,
-                    event_id=eventId,
-                    event_name=eventName,
-                    event_url=eventUrl,
-                    event_num=eventNum)
+        with createConnFromConfig(self.config) as conn:
+            # TODO: store event "number" (i.e. "first in the day")
+            conn.insert("o2cm.event",
+                        comp_id=compId,
+                        event_id=eventId,
+                        event_name=eventName,
+                        event_url=eventUrl,
+                        event_num=eventNum)
 
     def _storeEventEntry(self, compId, eventId, coupleNum, leaderName, followerName, placement, coupleLocation=None):
-        conn = self.conn
-        conn.insert("o2cm.entry",
-                    comp_id=compId,
-                    event_id=eventId,
-                    couple_num=coupleNum,
-                    leader_name=leaderName,
-                    follower_name=followerName,
-                    event_placement=placement,
-                    couple_location=coupleLocation)
+        with createConnFromConfig(self.config) as conn:
+            conn.insert("o2cm.entry",
+                        comp_id=compId,
+                        event_id=eventId,
+                        couple_num=coupleNum,
+                        leader_name=leaderName,
+                        follower_name=followerName,
+                        event_placement=placement,
+                        couple_location=coupleLocation)
 
     def _enqueueRounds(self, compId, heatName, heatId, heatLink):
         nextRequest = util.webutils.WebRequest(heatLink, "GET", {})
@@ -94,7 +94,7 @@ class O2cmCompParser(AbstractWebParser):
 def _parseHeatLink(tag):
     heatName = tag.get_text().lstrip().strip()
     heatLink = tag.find('a')['href']
-    m = re.match('scoresheet\d.asp\?.+&heatid=(\w+)&.+', heatLink)
+    m = re.match(r'scoresheet\d.asp\?.+&heatid=(\w+)&.+', heatLink)
     heatId = m.group(1)
     heatLink = 'http://results.o2cm.com/' + heatLink
     return (heatName, heatId, heatLink)

@@ -5,11 +5,12 @@ from webparser.parsertype import ParserType
 import util.webutils
 import util.crawlerutils
 import util.textutils
+from util.dbutils import createConnFromConfig
 
 class O2cmHeatParser(AbstractWebParser):
 
-    def __init__(self, q, conn, config=None):
-        super(O2cmHeatParser, self).__init__(q, conn, config)
+    def __init__(self, q, config):
+        super(O2cmHeatParser, self).__init__(q, config)
 
     def parse(self, htmlDOM, data):
         logging.info("Scraping " + data["compId"] + ", " + data["eventId"] + " Round " + str(data["roundNum"]))
@@ -46,61 +47,60 @@ class O2cmHeatParser(AbstractWebParser):
         danceName = titleRow.find('td').get_text().strip()
         headers = cleanRow(headerRow)
 
-        conn = self.conn
+        with createConnFromConfig(self.config) as conn:
 
-        spaceIndex = headers[1:].index('') + 1
-        judgeHeaders = getJudgeHeaders(table)
+            spaceIndex = headers[1:].index('') + 1
+            judgeHeaders = getJudgeHeaders(table)
 
-        # this can theoretically be tossed away, since it is calculated and placement is in the last column
-        scoringHeaders = headers[spaceIndex+1:]
-        for r in resultRows:
-            row = cleanRow(r)
-            coupleNum = row.pop(0)
-            for j in range(len(judgeHeaders)):
-                judgeMark = util.textutils.convert(row[j], int)
-                if row[j] == 'X':
-                    judgeMark = 1
-                conn.insert("o2cm.round_placement",
+            # this can theoretically be tossed away, since it is calculated and placement is in the last column
+            scoringHeaders = headers[spaceIndex+1:]
+            for r in resultRows:
+                row = cleanRow(r)
+                coupleNum = row.pop(0)
+                for j in range(len(judgeHeaders)):
+                    judgeMark = util.textutils.convert(row[j], int)
+                    if row[j] == 'X':
+                        judgeMark = 1
+                    conn.insert("o2cm.round_placement",
+                                comp_id=compId,
+                                event_id=eventId,
+                                round_num=roundNum,
+                                dance=danceName,
+                                couple_num=coupleNum,
+                                judge_num=judgeHeaders[j],
+                                mark=judgeMark)
+
+                placement = 0
+                if isFinal:
+                    placement = util.textutils.convert(row[-2], float)
+                else:
+                    placement = 1 if row[-1] == 'R' else 0
+
+                conn.insert("o2cm.round_result",
                             comp_id=compId,
                             event_id=eventId,
                             round_num=roundNum,
                             dance=danceName,
                             couple_num=coupleNum,
-                            judge_num=judgeHeaders[j],
-                            mark=judgeMark)
-
-            placement = 0
-            if isFinal:
-                placement = util.textutils.convert(row[-2], float)
-            else:
-                placement = 1 if row[-1] == 'R' else 0
-
-            conn.insert("o2cm.round_result",
-                        comp_id=compId,
-                        event_id=eventId,
-                        round_num=roundNum,
-                        dance=danceName,
-                        couple_num=coupleNum,
-                        placement=placement)
+                            placement=placement)
 
     def parseJudgeTable(self, compId, eventId, roundNum, table, numJudges):
         rows = table.find_all('tr')
         judgeRows = rows[-2*(numJudges)+1:]
 
-        conn = self.conn
-
-        for row in judgeRows:
-            cells = row.find_all('td')
-            if len(cells) < 2:
-                continue
-            judgeNum = cells[0].get_text().strip()
-            judgeName = cells[1].get_text().strip()
-            conn.insert("o2cm.judge",
-                        comp_id=compId,
-                        event_id=eventId,
-                        round_num=roundNum,
-                        judge_num=judgeNum,
-                        judge_name=judgeName)
+        with createConnFromConfig(self.config) as conn:
+            for row in judgeRows:
+                cells = row.find_all('td')
+                if len(cells) < 2:
+                    continue
+                judgeNum = cells[0].get_text().strip()
+                judgeName = cells[1].get_text().strip()
+                conn.insert("o2cm.judge",
+                            comp_id=compId,
+                            event_id=eventId,
+                            round_num=roundNum,
+                            judge_num=judgeNum,
+                            judge_name=judgeName)
 
 def cleanRow(row):
     return list(map(lambda td: td.get_text().strip(), row.find_all('td')))
