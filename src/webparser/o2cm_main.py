@@ -5,6 +5,7 @@ from webparser.abstractparser import AbstractWebParser
 from webparser.parsertype import ParserType
 import util.webutils
 import util.crawlerutils
+from util.configutils import getConfigProperty
 from util.dbutils import createConnFromConfig
 
 class O2cmMainParser(AbstractWebParser):
@@ -13,9 +14,7 @@ class O2cmMainParser(AbstractWebParser):
         super(O2cmMainParser, self).__init__(q, config)
 
     def parse(self, htmlDOM, data):
-        compsOfInterest = []
-        if 'o2cm' in self.config and 'comps' in self.config['o2cm']:
-            compsOfInterest = self.config['o2cm']['comps']
+        compsOfInterest = getConfigProperty(self.config, 'scraper', 'o2cm', 'comps', default=[])
 
         compLinks = htmlDOM.find_all('a')
         yearInput = htmlDOM.find_all('input', id='inyear')[0]

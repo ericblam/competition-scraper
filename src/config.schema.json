@@ -1,0 +1,63 @@
+{
+    "$schema":"http://json-schema.org/schema",
+    "title": "Competition Scraper Configuration",
+    "description": "Configuration for competition-scraper",
+    "type": "object",
+    "properties": {
+        "db": {
+            "description": "Database connection properties",
+            "type": "object",
+            "properties": {
+                "dbname": {
+                    "type": "string"
+                },
+                "host": {
+                    "type": "string"
+                },
+                "port": {
+                    "type": "number"
+                },
+                "user": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            },
+            "required": ["dbname", "host", "port", "user", "password"]
+        },
+        "logging": {
+            "description": "Logging configuration",
+            "type": "object",
+            "properties": {
+                "path": {
+                    "type": "string"
+                },
+                "level": {
+                    "type": "string",
+                    "enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+                }
+            },
+            "required": []
+        },
+        "scraper": {
+            "description": "Scraper-specific configurations",
+            "type": "object",
+            "properties": {
+                "o2cm": {
+                    "description": "TODO",
+                    "type": "object",
+                    "properties": {
+                        "comps": {
+                            "description": "TODO",
+                            "type": "array"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "required": [
+        "db"
+    ]
+}

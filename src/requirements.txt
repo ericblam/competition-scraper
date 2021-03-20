@@ -1,3 +1,4 @@
+jsonschema
 urllib3
 pytidylib
 bs4

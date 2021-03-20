@@ -1,5 +1,4 @@
 import argparse
-import json
 import logging
 import pickle
 import queue
@@ -9,6 +8,7 @@ import sys
 from webcrawler.worker import WorkerThread
 from util.dbutils import createConnFromConfig
 from util.crawlerutils import ScraperTask
+from util.configutils import getConfigProperty, configHasProperty, loadConfig
 from util.webutils import WebRequest
 
 class CrawlerExit(Exception):
@@ -74,12 +74,10 @@ def configureLogging(config):
     LOGGING_CONFIG_NAME = 'logging'
     LOGGING_CONFIG_PATH_NAME = 'path'
     LOGGING_CONFIG_LEVEL_NAME = 'level'
-    if LOGGING_CONFIG_NAME not in config or LOGGING_CONFIG_PATH_NAME not in config[LOGGING_CONFIG_NAME]:
+    if not configHasProperty(config, LOGGING_CONFIG_NAME, LOGGING_CONFIG_PATH_NAME):
         return
 
-    log_level = logging.INFO
-    if LOGGING_CONFIG_LEVEL_NAME in config[LOGGING_CONFIG_NAME] is not None:
-        log_level = getattr(logging, config[LOGGING_CONFIG_NAME][LOGGING_CONFIG_LEVEL_NAME].upper(), logging.INFO)
+    log_level = getattr(logging, getConfigProperty(config, LOGGING_CONFIG_NAME, LOGGING_CONFIG_LEVEL_NAME, default="INFO").upper())
 
     logger = logging.getLogger()
     logger.setLevel(log_level)
@@ -91,7 +89,7 @@ def configureLogging(config):
     logger.addHandler(console_log)
 
     file_log_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(module)s: %(message)s')
-    file_log = logging.FileHandler(config[LOGGING_CONFIG_NAME][LOGGING_CONFIG_PATH_NAME])
+    file_log = logging.FileHandler(getConfigProperty(config, LOGGING_CONFIG_NAME, LOGGING_CONFIG_PATH_NAME))
     file_log.setLevel(log_level)
     file_log.setFormatter(file_log_formatter)
     logger.addHandler(file_log)
@@ -104,12 +102,12 @@ if __name__ == "__main__":
     args = parseArgs()
 
     # initialize config
-    config = {}
-    with open(args.configFile[0]) as configFile:
-        config = json.load(configFile)
+    config = loadConfig(args.configFile[0])
 
     configureLogging(config)
     logger = logging.getLogger()
+
+    logger.info("Initialized")
 
     # initialize queue
     q = queue.LifoQueue()
