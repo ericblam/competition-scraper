@@ -24,6 +24,16 @@ class O2cmMainParser(AbstractWebParser):
 
         logging.info("Scraping o2cm: %d %d" % (year, month))
 
+        minYear = int(yearInput['min'])
+        month -= 1
+
+        if month < 1:
+            month = 12
+            year -= 1
+
+        if year >= minYear:
+            self._createNextMainPageRequest(year, month)
+
         for tag in compLinks:
             date = tag.parent.previous_sibling.previous_sibling.string.strip()
             compName = tag.get_text()
@@ -40,16 +50,6 @@ class O2cmMainParser(AbstractWebParser):
 
                 self._storeData(compId, compName, fullDate)
                 self._createCompPageRequest(compId, compName)
-
-        minYear = int(yearInput['min'])
-        month -= 1
-
-        if month < 1:
-            month = 12
-            year -= 1
-
-        if year >= minYear:
-            self._createNextMainPageRequest(year, month)
 
     def _resetData(self, compId):
         with createConnFromConfig(self.config) as conn:
