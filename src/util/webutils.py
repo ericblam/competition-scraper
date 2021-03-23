@@ -1,9 +1,12 @@
+import datetime
 import logging
 import os
 
 import urllib.error, urllib.parse, urllib.request
 from bs4 import BeautifulSoup
 from tidylib import tidy_document
+
+from util.logutils import LogTimer
 
 CACHE_DIR = os.path.dirname(__file__) + "/../.cache/"
 
@@ -43,9 +46,10 @@ def loadPage(requestObj):
 
     cacheFilename = CACHE_DIR + cacheFilename
     if (not forceReload and os.path.exists(cacheFilename)):
-        cachedPage = open(cacheFilename)
-        tidiedPage = cachedPage.read()
-        cachedPage.close()
+        with LogTimer("Loading web page (cached)"):
+            cachedPage = open(cacheFilename)
+            tidiedPage = cachedPage.read()
+            cachedPage.close()
         return BeautifulSoup(tidiedPage, "html.parser")
 
     try:
@@ -56,7 +60,10 @@ def loadPage(requestObj):
             url = url + ("?" if len(data) != 0 else "") + requestData
 
         urlRequest = urllib.request.Request(url, data=requestData.encode("ascii"), headers=requestObj.headers)
-        response = urllib.request.urlopen(urlRequest)
+
+        with LogTimer("Loading web page"):
+            response = urllib.request.urlopen(urlRequest)
+
         html_response = response.read()
         encoding = response.headers.get_content_charset("utf-8")
         decoded_html = html_response.decode(encoding)

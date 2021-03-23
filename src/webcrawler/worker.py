@@ -1,3 +1,4 @@
+import datetime
 import logging
 import pickle
 import threading
@@ -5,6 +6,7 @@ import traceback
 
 from webparser import parserfactory
 from util.dbutils import createConnFromConfig
+from util.logutils import LogTimer
 from util.webutils import WebRequest, loadPage
 
 """
@@ -20,7 +22,8 @@ def scrapeFromQueue(q, config):
             return True
 
         # get HTML
-        htmlDOM = loadPage(task.request)
+        with LogTimer("Loading and DOMing page"):
+            htmlDOM = loadPage(task.request)
 
         # if no hint, need to create one
         if task.hint is None:
@@ -31,7 +34,8 @@ def scrapeFromQueue(q, config):
 
         # parse HTML
         if parser is not None:
-            parser.parse(htmlDOM, task.data)
+            with LogTimer("Parsing page ({})".format(str(task))):
+                parser.parse(htmlDOM, task.data)
     except:
         stacktraceText = traceback.format_exc()
         logging.error(stacktraceText)

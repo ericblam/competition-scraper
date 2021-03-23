@@ -162,3 +162,5 @@ if __name__ == "__main__":
             q.put(None)
         for worker in workers:
             worker.join()
+
+    logging.info("Done")

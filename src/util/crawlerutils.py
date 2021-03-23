@@ -13,4 +13,4 @@ class ScraperTask:
         self.hint = hint
 
     def __str__(self):
-        return '%s\ndata: %s' % (self.request, self.data)
+        return '%s; data: %s' % (self.request, self.data)
