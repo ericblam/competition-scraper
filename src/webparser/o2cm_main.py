@@ -42,12 +42,12 @@ class O2cmMainParser(AbstractWebParser):
             m = re.match(r'event[23].asp\?event=([a-zA-Z]{0,4}\d{0,5}[a-zA-Z]?)&.*', link)
             compId = m.group(1).lower()
 
-            self._resetData(compId)
-
             if (len(compsOfInterest) == 0 or compId in compsOfInterest):
                 m = re.match(r'([a-z]+)\d+.*', compId)
                 # compCode = m.group(1)
                 fullDate = date + " " + str(year)
+
+                self._resetData(compId)
 
                 self._storeData(compId, compName, fullDate)
                 self._createCompPageRequest(compId, compName)
