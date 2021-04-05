@@ -45,11 +45,11 @@
             "type": "object",
             "properties": {
                 "o2cm": {
-                    "description": "TODO",
+                    "description": "O2CM-related parser configurations",
                     "type": "object",
                     "properties": {
                         "comps": {
-                            "description": "TODO",
+                            "description": "List of competition codes to pull",
                             "type": "array"
                         }
                     }
