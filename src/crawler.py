@@ -73,26 +73,29 @@ def parseArgs():
 def configureLogging(config):
     LOGGING_CONFIG_NAME = 'logging'
     LOGGING_CONFIG_PATH_NAME = 'path'
+    LOGGING_CONFIG_CONSOLE_NAME = 'console'
     LOGGING_CONFIG_LEVEL_NAME = 'level'
-    if not configHasProperty(config, LOGGING_CONFIG_NAME, LOGGING_CONFIG_PATH_NAME):
+
+    if not configHasProperty(config, LOGGING_CONFIG_NAME):
         return
 
-    log_level = getattr(logging, getConfigProperty(config, LOGGING_CONFIG_NAME, LOGGING_CONFIG_LEVEL_NAME, default="INFO").upper())
-
+    loggingConfigs = getConfigProperty(config, LOGGING_CONFIG_NAME)
     logger = logging.getLogger()
-    logger.setLevel(log_level)
-
-    console_log_formatter = logging.Formatter('%(levelname)s %(message)s')
-    console_log = logging.StreamHandler(stream=sys.stdout)
-    console_log.setLevel(log_level)
-    console_log.setFormatter(console_log_formatter)
-    logger.addHandler(console_log)
-
-    file_log_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(module)s: %(message)s')
-    file_log = logging.FileHandler(getConfigProperty(config, LOGGING_CONFIG_NAME, LOGGING_CONFIG_PATH_NAME))
-    file_log.setLevel(log_level)
-    file_log.setFormatter(file_log_formatter)
-    logger.addHandler(file_log)
+    logger.setLevel(logging.DEBUG) # TODO: Check
+    for loggingConfig in loggingConfigs:
+        log_level = getattr(logging, getConfigProperty(loggingConfig, LOGGING_CONFIG_LEVEL_NAME, default="INFO").upper())
+        if configHasProperty(loggingConfig, LOGGING_CONFIG_PATH_NAME):
+            file_log_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(module)s: %(message)s')
+            file_log = logging.FileHandler(getConfigProperty(loggingConfig, LOGGING_CONFIG_PATH_NAME))
+            file_log.setLevel(log_level)
+            file_log.setFormatter(file_log_formatter)
+            logger.addHandler(file_log)
+        elif configHasProperty(loggingConfig, LOGGING_CONFIG_CONSOLE_NAME) and getConfigProperty(loggingConfig, LOGGING_CONFIG_CONSOLE_NAME):
+            console_log_formatter = logging.Formatter('%(levelname)s %(message)s')
+            console_log = logging.StreamHandler(stream=sys.stdout)
+            console_log.setLevel(log_level)
+            console_log.setFormatter(console_log_formatter)
+            logger.addHandler(console_log)
 
 if __name__ == "__main__":
 

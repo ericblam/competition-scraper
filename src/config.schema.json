@@ -28,29 +28,58 @@
         },
         "logging": {
             "description": "Logging configuration",
-            "type": "object",
-            "properties": {
-                "path": {
-                    "type": "string"
+            "type": "array",
+            "contains": {
+                "type":"object",
+                "properties": {
+                    "path": {
+                        "description": "Logging to a file",
+                        "type": "string"
+                    },
+                    "console": {
+                        "description": "Logging to the console",
+                        "type": "boolean"
+                    },
+                    "level": {
+                        "type": "string",
+                        "enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+                    }
                 },
-                "level": {
-                    "type": "string",
-                    "enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-                }
-            },
-            "required": []
+                "oneOf": [
+                    {
+                        "required": ["path"]
+                    },
+                    {
+                        "required": ["console"]
+                    }
+                ],
+                "required": ["level"]
+            }
         },
         "scraper": {
             "description": "Scraper-specific configurations",
             "type": "object",
             "properties": {
+                "settings": {
+                    "description": "Settings for how to scrape",
+                    "type": "object",
+                    "properties": {
+                        "cache": {
+                            "description": "Whether to read web pages from cache",
+                            "type": "boolean"
+                        }
+                    }
+                },
                 "o2cm": {
                     "description": "O2CM-related parser configurations",
                     "type": "object",
                     "properties": {
                         "comps": {
                             "description": "List of competition codes to pull",
-                            "type": "array"
+                            "type": "array",
+                            "contains": {
+                                "type":"string"
+                            }
                         }
                     }
                 }

@@ -1,4 +1,5 @@
 #!/usr/bin/bash
 
 service postgresql start
-passwd postgres
+# Do when initially setting up
+# passwd postgres

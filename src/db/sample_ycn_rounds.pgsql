@@ -61,6 +61,6 @@ where results.leader_name = 'Eric Lam'
             and event_rounds.num_rounds >= 2
         )
     )
-    and (event_name like '%Gold%' or event_name like '%Advance%')
-    and event_name like '%Standard%'
+    and (event_name like '%Silver%' or event_name like '%Intermediate%')
+    and (event_name like '%Rhythm%' or event_name like '%Mambo%' or event_name like '%Swing%')
 order by comp_date;

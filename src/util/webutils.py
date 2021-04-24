@@ -6,7 +6,7 @@ import urllib.error, urllib.parse, urllib.request
 from bs4 import BeautifulSoup
 from tidylib import tidy_document
 
-from util.logutils import LogTimer
+from util.logutils import LogTimer, TimerType
 
 CACHE_DIR = os.path.dirname(__file__) + "/../.cache/"
 
@@ -46,7 +46,7 @@ def loadPage(requestObj):
 
     cacheFilename = CACHE_DIR + cacheFilename
     if (not forceReload and os.path.exists(cacheFilename)):
-        with LogTimer("Loading web page (cached)"):
+        with LogTimer("Loading web page (cached)", TimerType.WEB):
             cachedPage = open(cacheFilename)
             tidiedPage = cachedPage.read()
             cachedPage.close()
@@ -61,7 +61,7 @@ def loadPage(requestObj):
 
         urlRequest = urllib.request.Request(url, data=requestData.encode("ascii"), headers=requestObj.headers)
 
-        with LogTimer("Loading web page"):
+        with LogTimer("Loading web page", TimerType.WEB):
             response = urllib.request.urlopen(urlRequest)
 
         html_response = response.read()

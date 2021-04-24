@@ -5,20 +5,29 @@
         "host": "localhost",
         "port": 5432,
         "user": "postgres",
-        "password": "postgres"
+        "password": ""
     },
-    "logging": {
-        "path": "competition_scraper.log"
-    },
+    "logging": [
+        {
+            "path": "competition_scraper.log",
+            "level": "DEBUG"
+        },
+        {
+            "console": true,
+            "level": "INFO"
+        }
+    ],
     "scraper": {
         "o2cm": {
+            "_comps": [
+                "nwr05",
+                "rpi19"
+            ],
             "comps": [
                 "rpi20",
                 "rpi19",
-                "rub19"
-            ],
-            "_comps": [
-                "up19",
+                "rub19",
+                "upc19",
                 "big18",
                 "tub18",
                 "bbe18",
@@ -33,7 +42,28 @@
                 "ucb17",
                 "wsz17",
                 "mit17",
-                "rpi17"
+		        "ric17",
+                "rpi17",
+                "mac17",
+                "tub16",
+                "bbe16",
+                "ucb16",
+                "pbd16",
+                "mit16",
+                "rpi16",
+                "rub16",
+                "mac15",
+                "mds15",
+                "cdd15",
+                "ybt15",
+                "rub15",
+                "hcb15",
+                "rpi15",
+                "bub15",
+                "big14",
+                "mds14",
+                "pbd14",
+                "cdd14"
             ]
         }
     }
