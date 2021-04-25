@@ -114,7 +114,8 @@ class O2cmHeatParser(AbstractWebParser):
             cursor.copy_from(
                 convertDataToFileLike(results),
                 'o2cm.round_result',
-                columns=('comp_id', 'event_id', 'round_num', 'dance', 'couple_num', 'placement'))
+                columns=('comp_id', 'event_id', 'round_num', 'dance', 'couple_num', 'placement'),
+                null='')
 
     def storeJudges(self, judges: List[JudgeInfo]):
         with createConnFromConfig(self.config) as conn, conn.cursor() as cursor:

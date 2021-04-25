@@ -7,6 +7,7 @@ CREATE TABLE o2cm.competition (
     comp_id     varchar(8)
     , comp_name varchar(256)
     , comp_date date
+    , PRIMARY KEY (comp_id)
 );
 
 CREATE TABLE o2cm.event (
@@ -15,6 +16,7 @@ CREATE TABLE o2cm.event (
     , event_name varchar(256)
     , event_url  varchar(256)
     , event_num  int
+    , PRIMARY KEY (comp_id, event_id)
 );
 
 CREATE TABLE o2cm.entry (
@@ -25,6 +27,7 @@ CREATE TABLE o2cm.entry (
     , follower_name   varchar(256)
     , event_placement numeric(6,3)
     , couple_location varchar(32)
+    , PRIMARY KEY (comp_id, event_id, couple_num)
 );
 
 CREATE TABLE o2cm.round_placement (
@@ -35,6 +38,7 @@ CREATE TABLE o2cm.round_placement (
     , couple_num   int
     , judge_num    int
     , mark         int
+    , PRIMARY KEY (comp_id, event_id, round_num, dance, couple_num, judge_num)
 );
 
 CREATE TABLE o2cm.round_result (
@@ -44,6 +48,7 @@ CREATE TABLE o2cm.round_result (
     , dance      varchar(32)
     , couple_num int
     , placement  numeric(4,3)
+    , PRIMARY KEY (comp_id, event_id, round_num, dance, couple_num)
 );
 
 CREATE TABLE o2cm.judge (
@@ -52,4 +57,5 @@ CREATE TABLE o2cm.judge (
     , round_num  int
     , judge_num  int
     , judge_name varchar(128)
+    , PRIMARY KEY (comp_id, event_id, round_num, judge_num)
 );
