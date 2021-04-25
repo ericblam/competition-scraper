@@ -116,8 +116,9 @@ if __name__ == "__main__":
     q = queue.LifoQueue()
 
     if args.showExceptions:
-        with createConnFromConfig(config) as conn:
-            exceptions = conn.query("SELECT error_id, task, error_description FROM crawler.error").getresult()
+        with createConnFromConfig(config) as conn, conn.cursor() as cursor:
+            cursor.execute("SELECT error_id, task, error_description FROM crawler.error")
+            exceptions = cursor.fetchall()
             for e in exceptions:
                 task = pickle.loads(conn.unescape_bytea(e[1]))
                 logger.error(task)
@@ -125,18 +126,18 @@ if __name__ == "__main__":
             exit()
 
     if args.clearExceptions:
-        with createConnFromConfig(config) as conn:
-            conn.query("DELETE FROM crawler.error")
+        with createConnFromConfig(config) as conn, conn.cursor() as cursor:
+            cursor.execute("DELETE FROM crawler.error")
             exit()
 
     if args.exceptions:
-        with createConnFromConfig(config) as conn:
-            conn = createConnFromConfig(config)
-            exceptions = conn.query("SELECT error_id, task, error_description FROM crawler.error").getresult()
+        with createConnFromConfig(config) as conn, conn.cursor() as cursor:
+            cursor.execute("SELECT error_id, task, error_description FROM crawler.error")
+            exceptions = cursor.fetchall()
             for e in exceptions:
                 task = pickle.loads(conn.unescape_bytea(e[1]))
                 q.put(task)
-            conn.query("DELETE FROM crawler.error")
+            cursor.execute("DELETE FROM crawler.error")
 
     for url in args.seedUrls:
         request = WebRequest(url)
@@ -147,7 +148,6 @@ if __name__ == "__main__":
     # start workers
     workers = []
     for i in range(args.numWorkers[0]):
-        conn = createConnFromConfig(config)
         worker = WorkerThread(q, config)
         worker.start()
         workers.append(worker)

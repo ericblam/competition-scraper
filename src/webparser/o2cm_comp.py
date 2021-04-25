@@ -1,11 +1,16 @@
 import logging
 import re
+from collections import namedtuple
 
 from webparser.abstractparser import AbstractWebParser
 from webparser.parsertype import ParserType
 import util.webutils
 import util.crawlerutils
 from util.dbutils import createConnFromConfig
+from util.logutils import LogTimer, TimerType
+
+EventData = namedtuple('EventData', ['compId', 'eventId', 'eventName', 'eventUrl', 'eventNum'])
+EventEntry = namedtuple('EventEntry', ['compId', 'eventId', 'coupleNum', 'leaderName', 'followerName', 'placement', 'coupleLocation'])
 
 class O2cmCompParser(AbstractWebParser):
 
@@ -13,77 +18,77 @@ class O2cmCompParser(AbstractWebParser):
         super(O2cmCompParser, self).__init__(q, config)
 
     def parse(self, htmlDOM, data):
-        tables = htmlDOM.find_all('table')
-        mainTable = tables[1]
-        rows = mainTable.find_all('tr')
-
         compId = data['compId']
-        logging.info("Scraping " + compId)
+        with LogTimer('Parsing comp {}'.format(compId), TimerType.PARSE):
+            tables = htmlDOM.find_all('table')
+            mainTable = tables[1]
+            rows = mainTable.find_all('tr')
 
-        # Find first link
-        rowNum = 0
-        eventNum = 0
-        while rowNum < len(rows):
-            if (rows[rowNum].find('a') != None):
-                break
-            rowNum += 1
+            logging.info("Scraping " + compId)
 
-        lastHeatName = None
-        lastHeadId = None
-        lastHeatLink = None
-        # Keep finding appropriate links
-        # As before, read first event page, read all heats of event
-        while rowNum < len(rows):
-            rowText = rows[rowNum].get_text().strip()
+            # Find first link
+            rowNum = 0
+            eventNum = 0
+            while rowNum < len(rows):
+                if (rows[rowNum].find('a') != None):
+                    break
+                rowNum += 1
 
-            # Blank row
-            if rowText == '----':
-                pass
+            lastHeatName = None
+            lastHeatLink = None
+            # Keep finding appropriate links
+            # As before, read first event page, read all heats of event
+            events: list[EventData] = []
+            entries: list[EventEntry] = []
+            while rowNum < len(rows):
+                rowText = rows[rowNum].get_text().strip()
 
-            # Row is a link. Read event and heats.
-            elif (rows[rowNum].find('a') != None):
-                lastHeatName, lastHeatId, lastHeatLink = _parseHeatLink(rows[rowNum])
-                if ("combine" not in lastHeatName.lower()):
-                    self._storeEvent(compId, lastHeatId, lastHeatName, lastHeatLink, eventNum)
-                    eventNum += 1
-                    self._enqueueRounds(compId, lastHeatName, lastHeatId, lastHeatLink)
+                # Blank row
+                if rowText == '----':
+                    pass
 
-            # Row is a couple
-            elif (lastHeatName is not None and "combine" not in lastHeatName.lower()):
-                coupleNum, leaderName, followerName, placement, coupleLocation = _parseEntry(rows[rowNum].get_text().strip())
-                self._storeEventEntry(compId, lastHeatId, coupleNum, leaderName, followerName, placement, coupleLocation)
+                # Row is a link. Read event and heats.
+                elif (rows[rowNum].find('a') != None):
+                    lastHeatName, lastHeatId, lastHeatLink = _parseHeatLink(rows[rowNum])
+                    if ("combine" not in lastHeatName.lower()):
+                        events.append(EventData(compId, lastHeatId, lastHeatName, lastHeatLink, eventNum))
+                        eventNum += 1
 
-            rowNum += 1
+                # Row is a couple
+                elif (lastHeatName is not None and "combine" not in lastHeatName.lower()):
+                    coupleNum, leaderName, followerName, placement, coupleLocation = _parseEntry(rows[rowNum].get_text().strip())
+                    entries.append(EventEntry(compId, lastHeatId, coupleNum, leaderName, followerName, placement, coupleLocation))
+                rowNum += 1
+
+        with LogTimer('Storing event data {}'.format(compId), TimerType.DB):
+            for event in events:
+                self._storeEvent(event)
+
+        with LogTimer('Storing entry data {}'.format(compId), TimerType.DB):
+            # TODO: Bulk insert
+            for entry in entries:
+                self._storeEventEntry(entry)
+
+        for event in events:
+            self._enqueueRounds(event)
 
 
-    def _storeEvent(self, compId, eventId, eventName, eventUrl, eventNum):
-        with createConnFromConfig(self.config) as conn:
+    def _storeEvent(self, compEvent: EventData):
+        with createConnFromConfig(self.config) as conn, conn.cursor() as cursor:
             # TODO: store event "number" (i.e. "first in the day")
-            conn.insert("o2cm.event",
-                        comp_id=compId,
-                        event_id=eventId,
-                        event_name=eventName,
-                        event_url=eventUrl,
-                        event_num=eventNum)
+            cursor.execute("INSERT INTO o2cm.event (comp_id, event_id, event_name, event_url, event_num) VALUES (%s, %s, %s, %s, %s)", compEvent)
 
-    def _storeEventEntry(self, compId, eventId, coupleNum, leaderName, followerName, placement, coupleLocation=None):
-        with createConnFromConfig(self.config) as conn:
-            conn.insert("o2cm.entry",
-                        comp_id=compId,
-                        event_id=eventId,
-                        couple_num=coupleNum,
-                        leader_name=leaderName,
-                        follower_name=followerName,
-                        event_placement=placement,
-                        couple_location=coupleLocation)
+    def _storeEventEntry(self, eventEntry: EventEntry):
+        with createConnFromConfig(self.config) as conn, conn.cursor() as cursor:
+            cursor.execute("INSERT INTO o2cm.entry (comp_id, event_id, couple_num, leader_name, follower_name, event_placement, couple_location) VALUES (%s, %s, %s, %s, %s, %s, %s)", eventEntry)
 
-    def _enqueueRounds(self, compId, heatName, heatId, heatLink):
-        nextRequest = util.webutils.WebRequest(heatLink, "GET", {})
+    def _enqueueRounds(self, compEvent: EventData):
+        nextRequest = util.webutils.WebRequest(compEvent.eventUrl, "GET", {})
         nextData = {
-            "url": heatLink,
-            "compId": compId,
-            "eventId": heatId,
-            "eventName": heatName
+            "url": compEvent.eventUrl,
+            "compId": compEvent.compId,
+            "eventId": compEvent.eventId,
+            "eventName": compEvent.eventName
         } # TODO: populate this
         newTask = util.crawlerutils.ScraperTask(
             nextRequest,

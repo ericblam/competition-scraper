@@ -47,7 +47,7 @@ class O2cmHeatParser(AbstractWebParser):
         danceName = titleRow.find('td').get_text().strip()
         headers = cleanRow(headerRow)
 
-        with createConnFromConfig(self.config) as conn:
+        with createConnFromConfig(self.config) as conn, conn.cursor() as cursor:
 
             spaceIndex = headers[1:].index('') + 1
             judgeHeaders = getJudgeHeaders(table)
@@ -61,14 +61,7 @@ class O2cmHeatParser(AbstractWebParser):
                     judgeMark = util.textutils.convert(row[j], int)
                     if row[j] == 'X':
                         judgeMark = 1
-                    conn.insert("o2cm.round_placement",
-                                comp_id=compId,
-                                event_id=eventId,
-                                round_num=roundNum,
-                                dance=danceName,
-                                couple_num=coupleNum,
-                                judge_num=judgeHeaders[j],
-                                mark=judgeMark)
+                    cursor.execute("INSERT INTO o2cm.round_placement (comp_id, event_id, round_num, dance, couple_num, judge_num, mark) VALUES (%s, %s, %s, %s, %s, %s, %s)", (compId, eventId, roundNum, danceName, coupleNum, judgeHeaders[j], judgeMark))
 
                 placement = 0
                 if isFinal:
@@ -76,31 +69,20 @@ class O2cmHeatParser(AbstractWebParser):
                 else:
                     placement = 1 if row[-1] == 'R' else 0
 
-                conn.insert("o2cm.round_result",
-                            comp_id=compId,
-                            event_id=eventId,
-                            round_num=roundNum,
-                            dance=danceName,
-                            couple_num=coupleNum,
-                            placement=placement)
+                cursor.execute("INSERT INTO o2cm.round_result (comp_id, event_id, round_num, dance, couple_num, placement) VALUES (%s, %s, %s, %s, %s, %s)", (compId, eventId, roundNum, danceName, coupleNum, placement))
 
     def parseJudgeTable(self, compId, eventId, roundNum, table, numJudges):
         rows = table.find_all('tr')
         judgeRows = rows[-2*(numJudges)+1:]
 
-        with createConnFromConfig(self.config) as conn:
+        with createConnFromConfig(self.config) as conn, conn.cursor() as cursor:
             for row in judgeRows:
                 cells = row.find_all('td')
                 if len(cells) < 2:
                     continue
                 judgeNum = cells[0].get_text().strip()
                 judgeName = cells[1].get_text().strip()
-                conn.insert("o2cm.judge",
-                            comp_id=compId,
-                            event_id=eventId,
-                            round_num=roundNum,
-                            judge_num=judgeNum,
-                            judge_name=judgeName)
+                cursor.execute("INSERT INTO o2cm.judge (comp_id, event_id, round_num, judge_num, judge_name) VALUES (%s, %s, %s, %s, %s)", (compId, eventId, roundNum, judgeNum, judgeName))
 
 def cleanRow(row):
     return list(map(lambda td: td.get_text().strip(), row.find_all('td')))

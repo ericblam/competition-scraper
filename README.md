@@ -13,7 +13,7 @@ Make sure that you have the following python packages installed:
 * urllib3
 * pytidylib
 * bs4
-* pygresql
+* psycopg2
 
 Additionally, you will need a database running with the configurations specified in src/config.json and the specified database loaded with the SQL files in src/db.
 

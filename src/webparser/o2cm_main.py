@@ -54,20 +54,17 @@ class O2cmMainParser(AbstractWebParser):
                     self._createCompPageRequest(compId, compName)
 
     def _resetData(self, compId):
-        with createConnFromConfig(self.config) as conn, LogTimer("Cleaning {}".format(compId), TimerType.DB):
-            conn.query("DELETE FROM o2cm.judge WHERE comp_id = $1", compId)
-            conn.query("DELETE FROM o2cm.round_result WHERE comp_id = $1", compId)
-            conn.query("DELETE FROM o2cm.round_placement WHERE comp_id = $1", compId)
-            conn.query("DELETE FROM o2cm.entry WHERE comp_id = $1", compId)
-            conn.query("DELETE FROM o2cm.event WHERE comp_id = $1", compId)
-            conn.query("DELETE FROM o2cm.competition WHERE comp_id = $1", compId)
+        with createConnFromConfig(self.config) as conn, conn.cursor() as cursor, LogTimer("Cleaning {}".format(compId), TimerType.DB):
+            cursor.execute("DELETE FROM o2cm.judge WHERE comp_id = %s", (compId, ))
+            cursor.execute("DELETE FROM o2cm.round_result WHERE comp_id = %s", (compId, ))
+            cursor.execute("DELETE FROM o2cm.round_placement WHERE comp_id = %s", (compId, ))
+            cursor.execute("DELETE FROM o2cm.entry WHERE comp_id = %s", (compId, ))
+            cursor.execute("DELETE FROM o2cm.event WHERE comp_id = %s", (compId, ))
+            cursor.execute("DELETE FROM o2cm.competition WHERE comp_id = %s", (compId, ))
 
     def _storeData(self, compId, compName, compDate):
-        with createConnFromConfig(self.config) as conn, LogTimer("Saving {}".format(compId), TimerType.DB):
-            conn.insert("o2cm.competition",
-                        comp_id=compId,
-                        comp_name=compName,
-                        comp_date=compDate)
+        with createConnFromConfig(self.config) as conn, conn.cursor() as cursor, LogTimer("Saving {}".format(compId), TimerType.DB):
+            cursor.execute("INSERT INTO o2cm.competition (comp_id, comp_name, comp_date) VALUES (%s, %s, %s)", (compId, compName, compDate))
 
     def _createNextMainPageRequest(self, year, month):
         url = 'http://results.o2cm.com'
