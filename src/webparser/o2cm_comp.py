@@ -1,12 +1,13 @@
 import logging
 import re
 from collections import namedtuple
+from typing import List
 
 from webparser.abstractparser import AbstractWebParser
 from webparser.parsertype import ParserType
 import util.webutils
 import util.crawlerutils
-from util.dbutils import createConnFromConfig
+from util.dbutils import createConnFromConfig, convertDataToFileLike
 from util.logutils import LogTimer, TimerType
 
 EventData = namedtuple('EventData', ['compId', 'eventId', 'eventName', 'eventUrl', 'eventNum'])
@@ -38,8 +39,8 @@ class O2cmCompParser(AbstractWebParser):
             lastHeatLink = None
             # Keep finding appropriate links
             # As before, read first event page, read all heats of event
-            events: list[EventData] = []
-            entries: list[EventEntry] = []
+            events: List[EventData] = []
+            entries: List[EventEntry] = []
             while rowNum < len(rows):
                 rowText = rows[rowNum].get_text().strip()
 
@@ -61,26 +62,27 @@ class O2cmCompParser(AbstractWebParser):
                 rowNum += 1
 
         with LogTimer('Storing event data {}'.format(compId), TimerType.DB):
-            for event in events:
-                self._storeEvent(event)
+            self._storeEvents(events)
 
         with LogTimer('Storing entry data {}'.format(compId), TimerType.DB):
-            # TODO: Bulk insert
-            for entry in entries:
-                self._storeEventEntry(entry)
+            self._storeEventEntries(entries)
 
         for event in events:
             self._enqueueRounds(event)
 
-
-    def _storeEvent(self, compEvent: EventData):
+    def _storeEvents(self, compEvents: List[EventData]):
         with createConnFromConfig(self.config) as conn, conn.cursor() as cursor:
-            # TODO: store event "number" (i.e. "first in the day")
-            cursor.execute("INSERT INTO o2cm.event (comp_id, event_id, event_name, event_url, event_num) VALUES (%s, %s, %s, %s, %s)", compEvent)
+            cursor.copy_from(
+                convertDataToFileLike(compEvents),
+                'o2cm.event',
+                columns=('comp_id', 'event_id', 'event_name', 'event_url', 'event_num'))
 
-    def _storeEventEntry(self, eventEntry: EventEntry):
+    def _storeEventEntries(self, eventEntries: List[EventEntry]):
         with createConnFromConfig(self.config) as conn, conn.cursor() as cursor:
-            cursor.execute("INSERT INTO o2cm.entry (comp_id, event_id, couple_num, leader_name, follower_name, event_placement, couple_location) VALUES (%s, %s, %s, %s, %s, %s, %s)", eventEntry)
+            cursor.copy_from(
+                convertDataToFileLike(eventEntries),
+                'o2cm.entry',
+                columns=('comp_id', 'event_id', 'couple_num', 'leader_name', 'follower_name', 'event_placement', 'couple_location'))
 
     def _enqueueRounds(self, compEvent: EventData):
         nextRequest = util.webutils.WebRequest(compEvent.eventUrl, "GET", {})

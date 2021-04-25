@@ -1,3 +1,4 @@
+import io
 import psycopg2
 
 def createConnFromConfig(config):
@@ -14,4 +15,5 @@ def createConnFromConfig(config):
 
     return conn
 
-
+def convertDataToFileLike(data):
+    return io.StringIO("\n".join(["\t".join([str(col) for col in row]) for row in data]))
