@@ -40,7 +40,7 @@ def scrapeFromQueue(q, config):
         stacktraceText = traceback.format_exc()
         logging.error(stacktraceText)
         with createConnFromConfig(config) as conn, conn.cursor() as cursor:
-            cursor.execute('INSERT INTO crawler.error (task, error_description) VALUES (%s, %s)', pickle.dumps(task), stacktraceText) # TODO: Verify this works after converting to psycopg2. May need to escape_bytea
+            cursor.execute('INSERT INTO crawler.error (task, error_description) VALUES (%s, %s)', (pickle.dumps(task), stacktraceText)) # TODO: Verify this works after converting to psycopg2. May need to escape_bytea
 
     q.task_done()
 
