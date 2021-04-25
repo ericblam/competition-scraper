@@ -17,4 +17,4 @@ class LogTimer(object):
         self.initial_time = time()
     
     def __exit__(self, type, value, traceback):
-        logging.debug("({}Timer) {:.3f}s - {}".format(self.timer_type, (time() - self.initial_time) * 1.0, self.context))
+        logging.debug("({}) {:.3f}s - {}".format(self.timer_type, (time() - self.initial_time) * 1.0, self.context))

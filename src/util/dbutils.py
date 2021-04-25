@@ -16,4 +16,4 @@ def createConnFromConfig(config):
     return conn
 
 def convertDataToFileLike(data):
-    return io.StringIO("\n".join(["\t".join([str(col) for col in row]) for row in data]))
+    return io.StringIO("\n".join(["\t".join([str(col if col is not None else '') for col in row]) for row in data]))
