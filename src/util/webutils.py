@@ -46,7 +46,7 @@ def loadPage(requestObj):
 
     cacheFilename = CACHE_DIR + cacheFilename
     if (not forceReload and os.path.exists(cacheFilename)):
-        with LogTimer("Loading web page (cached)", TimerType.WEB):
+        with LogTimer("Load web page (cached)", TimerType.WEB):
             cachedPage = open(cacheFilename)
             tidiedPage = cachedPage.read()
             cachedPage.close()
@@ -61,7 +61,7 @@ def loadPage(requestObj):
 
         urlRequest = urllib.request.Request(url, data=requestData.encode("ascii"), headers=requestObj.headers)
 
-        with LogTimer("Loading web page", TimerType.WEB):
+        with LogTimer("Load web page", TimerType.WEB):
             response = urllib.request.urlopen(urlRequest)
 
         html_response = response.read()

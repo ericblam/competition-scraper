@@ -1,5 +1,6 @@
 import argparse
 import logging
+import logging.handlers
 import pickle
 import queue
 import signal
@@ -9,6 +10,7 @@ from webcrawler.worker import WorkerThread
 from util.dbutils import createConnFromConfig
 from util.crawlerutils import ScraperTask
 from util.configutils import getConfigProperty, configHasProperty, loadConfig
+from util.logutils import LogTimer, TimerType
 from util.webutils import WebRequest
 
 class CrawlerExit(Exception):
@@ -86,9 +88,10 @@ def configureLogging(config):
         log_level = getattr(logging, getConfigProperty(loggingConfig, LOGGING_CONFIG_LEVEL_NAME, default="INFO").upper())
         if configHasProperty(loggingConfig, LOGGING_CONFIG_PATH_NAME):
             file_log_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(module)s: %(message)s')
-            file_log = logging.FileHandler(getConfigProperty(loggingConfig, LOGGING_CONFIG_PATH_NAME))
+            file_log = logging.handlers.RotatingFileHandler(getConfigProperty(loggingConfig, LOGGING_CONFIG_PATH_NAME), backupCount=5)
             file_log.setLevel(log_level)
             file_log.setFormatter(file_log_formatter)
+            file_log.doRollover()
             logger.addHandler(file_log)
         elif configHasProperty(loggingConfig, LOGGING_CONFIG_CONSOLE_NAME) and getConfigProperty(loggingConfig, LOGGING_CONFIG_CONSOLE_NAME):
             console_log_formatter = logging.Formatter('%(levelname)s %(message)s')
@@ -146,24 +149,25 @@ if __name__ == "__main__":
         q.put(seedTask)
 
     # start workers
-    workers = []
-    for i in range(args.numWorkers[0]):
-        worker = WorkerThread(q, config)
-        worker.start()
-        workers.append(worker)
-
-    try:
-        # block until we finish scraping
-        q.join()
-    except CrawlerExit:
-        logging.info("Stopping crawler")
-        for worker in workers:
-            worker.stop()
-    finally:
-        # stop workers
+    with LogTimer('Total work', TimerType.GENERAL):
+        workers = []
         for i in range(args.numWorkers[0]):
-            q.put(None)
-        for worker in workers:
-            worker.join()
+            worker = WorkerThread(q, config)
+            worker.start()
+            workers.append(worker)
+
+        try:
+            # block until we finish scraping
+            q.join()
+        except CrawlerExit:
+            logging.info("Stopping crawler")
+            for worker in workers:
+                worker.stop()
+        finally:
+            # stop workers
+            for i in range(args.numWorkers[0]):
+                q.put(None)
+            for worker in workers:
+                worker.join()
 
     logging.info("Done")

@@ -54,7 +54,7 @@ class O2cmMainParser(AbstractWebParser):
                     self._createCompPageRequest(compId, compName)
 
     def _resetData(self, compId):
-        with createConnFromConfig(self.config) as conn, conn.cursor() as cursor, LogTimer("Cleaning {}".format(compId), TimerType.DB):
+        with createConnFromConfig(self.config) as conn, conn.cursor() as cursor, LogTimer("Clean {}".format(compId), TimerType.DB):
             cursor.execute("DELETE FROM o2cm.judge WHERE comp_id = %s", (compId, ))
             cursor.execute("DELETE FROM o2cm.round_result WHERE comp_id = %s", (compId, ))
             cursor.execute("DELETE FROM o2cm.round_placement WHERE comp_id = %s", (compId, ))
@@ -63,7 +63,7 @@ class O2cmMainParser(AbstractWebParser):
             cursor.execute("DELETE FROM o2cm.competition WHERE comp_id = %s", (compId, ))
 
     def _storeData(self, compId, compName, compDate):
-        with createConnFromConfig(self.config) as conn, conn.cursor() as cursor, LogTimer("Saving {}".format(compId), TimerType.DB):
+        with createConnFromConfig(self.config) as conn, conn.cursor() as cursor, LogTimer("Save {}".format(compId), TimerType.DB):
             cursor.execute("INSERT INTO o2cm.competition (comp_id, comp_name, comp_date) VALUES (%s, %s, %s)", (compId, compName, compDate))
 
     def _createNextMainPageRequest(self, year, month):

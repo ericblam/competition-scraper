@@ -25,7 +25,7 @@ class O2cmHeatParser(AbstractWebParser):
         roundNum = data["roundNum"]
 
         logging.info("Scraping {}, {} Round {}".format(compId, eventId, roundNum))
-        with LogTimer('Parsed {}, {} Round {}'.format(compId, eventId, roundNum), TimerType.PARSE):
+        with LogTimer('Parse {}, {} Round {}'.format(compId, eventId, roundNum), TimerType.PARSE):
             # find all tables
             # last table will be for listing competitors and judges
             # if it is a final with multiple dances, there will also be a table for the summary
@@ -50,7 +50,7 @@ class O2cmHeatParser(AbstractWebParser):
 
             judges: List[JudgeInfo] = self.parseJudgeTable(compId, eventId, roundNum, coupleAndJudgesTable, len(getJudgeHeaders(resultTables[0])))
 
-        with LogTimer('Saving {}, {} Round {}'.format(compId, eventId, roundNum), TimerType.DB):
+        with LogTimer('Save {}, {} Round {}'.format(compId, eventId, roundNum), TimerType.DB):
             self.storePlacements(placements)
             self.storeResults(results)
             self.storeJudges(judges)

@@ -20,7 +20,7 @@ class O2cmCompParser(AbstractWebParser):
 
     def parse(self, htmlDOM, data):
         compId = data['compId']
-        with LogTimer('Parsing comp {}'.format(compId), TimerType.PARSE):
+        with LogTimer('Parse comp {}'.format(compId), TimerType.PARSE):
             tables = htmlDOM.find_all('table')
             mainTable = tables[1]
             rows = mainTable.find_all('tr')
@@ -61,10 +61,10 @@ class O2cmCompParser(AbstractWebParser):
                     entries.append(EventEntry(compId, lastHeatId, coupleNum, leaderName, followerName, placement, coupleLocation))
                 rowNum += 1
 
-        with LogTimer('Storing event data {}'.format(compId), TimerType.DB):
+        with LogTimer('Store event data {}'.format(compId), TimerType.DB):
             self._storeEvents(events)
 
-        with LogTimer('Storing entry data {}'.format(compId), TimerType.DB):
+        with LogTimer('Store entry data {}'.format(compId), TimerType.DB):
             self._storeEventEntries(entries)
 
         for event in events:

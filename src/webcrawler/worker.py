@@ -22,7 +22,7 @@ def scrapeFromQueue(q, config):
             return True
 
         # get HTML
-        with LogTimer("Loading and DOMing page"):
+        with LogTimer("Load and DOM page"):
             htmlDOM = loadPage(task.request)
 
         # if no hint, need to create one
@@ -34,7 +34,7 @@ def scrapeFromQueue(q, config):
 
         # parse HTML
         if parser is not None:
-            with LogTimer("Parsing page ({})".format(str(task))):
+            with LogTimer("Parse page ({})".format(str(task))):
                 parser.parse(htmlDOM, task.data)
     except:
         stacktraceText = traceback.format_exc()
